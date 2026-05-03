@@ -253,7 +253,7 @@ export class RaceScene extends Phaser.Scene {
 
   _createUI() {
     // Problem text
-    this.problemText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.74, '', {
+    this.problemText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, '', {
       fontSize: '36px',
       fontStyle: 'bold',
       color: '#ffffff',
@@ -265,10 +265,10 @@ export class RaceScene extends Phaser.Scene {
     // Answer buttons (2×2 grid)
     this.answerButtons = [];
     const btnW = 160;
-    const btnH = 56;
-    const gap = 16;
+    const btnH = 50;
+    const gap = 10;
     const gridStartX = GAME_WIDTH / 2 - btnW - gap / 2;
-    const gridStartY = GAME_HEIGHT * 0.80;
+    const gridStartY = GAME_HEIGHT * 0.74;
 
     for (let row = 0; row < 2; row++) {
       for (let col = 0; col < 2; col++) {
@@ -295,7 +295,7 @@ export class RaceScene extends Phaser.Scene {
     }
 
     // Feedback text (shows correct answer on wrong)
-    this.feedbackText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.71, '', {
+    this.feedbackText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.65, '', {
       fontSize: '22px',
       fontStyle: 'bold',
       color: '#44ff44',
