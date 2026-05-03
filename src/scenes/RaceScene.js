@@ -94,9 +94,11 @@ export class RaceScene extends Phaser.Scene {
     // Update progress bar
     this._updateProgressBar();
 
-    // Check race end — all cars crossed finish
-    if (this.finishOrder.length === 4) {
-      this._endRace();
+    // Check race end — end shortly after player finishes
+    if (this.playerFinished && !this._endScheduled) {
+      this._endScheduled = true;
+      // Give a brief moment then end, don't wait for all AI
+      this.time.delayedCall(1500, () => this._endRace());
     }
   }
 
@@ -347,7 +349,13 @@ export class RaceScene extends Phaser.Scene {
   // ─── Problem Flow ────────────────────────────────────────────────────────
 
   _nextProblem() {
-    if (this.raceOver) return;
+    if (this.raceOver || this.playerFinished) {
+      // Player crossed the line — hide buttons and coast to results
+      this.problemText.setText('🏁 FINISHED!');
+      this._hideButtons();
+      this.waitingForInput = false;
+      return;
+    }
 
     const problem = this.mathEngine.generateProblem({ min: 1, max: 9 });
     this.currentProblem = problem;
