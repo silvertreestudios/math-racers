@@ -22,14 +22,13 @@
       padding-right: env(safe-area-inset-right);
     }
     #game-container {
-      width: 100vw;
-      height: 100vh;
-      /* Override safe area padding for full-bleed canvas */
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      /* Use dvh (dynamic viewport height) where supported, fallback to innerHeight via JS */
+      width: 100vw;
+      height: 100dvh;
+      height: 100vh; /* fallback for older browsers, overridden by JS */
     }
     canvas {
       display: block;
@@ -95,11 +94,19 @@
   <div id="game-container"></div>
   <script type="module" src="/src/main.js"></script>
   <script>
+    // Fix mobile viewport: 100vh includes browser chrome, window.innerHeight doesn't
+    function setRealViewport() {
+      const container = document.getElementById('game-container');
+      container.style.height = window.innerHeight + 'px';
+      container.style.width = window.innerWidth + 'px';
+    }
+    setRealViewport();
+    window.addEventListener('resize', setRealViewport);
+    window.addEventListener('orientationchange', () => setTimeout(setRealViewport, 100));
+
     // Try to lock orientation to landscape
     if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {
-        // Silently fail — CSS overlay handles it
-      });
+      screen.orientation.lock('landscape').catch(() => {});
     }
   </script>
 </body>
