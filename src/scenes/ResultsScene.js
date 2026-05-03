@@ -1,9 +1,10 @@
 /**
  * ResultsScene — Post-race results: position, accuracy, bucks earned.
+ * All positions proportional to actual screen size.
  */
 import Phaser from 'phaser';
 import {
-  GAME_WIDTH, GAME_HEIGHT,
+  SAFE_PADDING,
   BUCKS_BY_POSITION, BUCKS_ACCURACY_BONUS, BUCKS_STREAK_BONUS,
 } from '../config/constants.js';
 
@@ -17,6 +18,10 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   create() {
+    const w = this.scale.width;
+    const h = this.scale.height;
+    const cx = w / 2;
+
     const { position, correct, answered, streak } = this.raceData;
     const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
 
@@ -34,17 +39,16 @@ export class ResultsScene extends Phaser.Scene {
     // ── Background ────────────────────────────────────────────────────────
     const gfx = this.add.graphics();
     gfx.fillGradientStyle(0x1a1a3e, 0x1a1a3e, 0x2a2a5e, 0x2a2a5e, 1);
-    gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    gfx.fillRect(0, 0, w, h);
 
-    const cx = GAME_WIDTH / 2;
-    let y = 40;
+    let y = SAFE_PADDING + 20;
 
     // ── Position header ───────────────────────────────────────────────────
     const posLabels = ['🥇 1st Place!', '🥈 2nd Place!', '🥉 3rd Place!', '🏅 4th Place'];
     const posColors = ['#ffd700', '#c0c0c0', '#cd7f32', '#88aacc'];
 
     this.add.text(cx, y, posLabels[position - 1], {
-      fontSize: '48px',
+      fontSize: `${Math.min(48, w * 0.06)}px`,
       fontStyle: 'bold',
       color: posColors[position - 1],
       fontFamily: 'Arial Black, Arial',
@@ -52,37 +56,37 @@ export class ResultsScene extends Phaser.Scene {
       strokeThickness: 4,
     }).setOrigin(0.5);
 
-    y += 80;
+    y += h * 0.16;
 
     // ── Stats ─────────────────────────────────────────────────────────────
     const statsStyle = {
-      fontSize: '24px',
+      fontSize: `${Math.min(24, w * 0.03)}px`,
       color: '#ffffff',
       fontFamily: 'Arial',
     };
 
     this.add.text(cx, y, `Accuracy: ${accuracy}% (${correct}/${answered})`, statsStyle).setOrigin(0.5);
-    y += 40;
+    y += h * 0.08;
 
     this.add.text(cx, y, `Best Streak: ${streak} 🔥`, statsStyle).setOrigin(0.5);
-    y += 60;
+    y += h * 0.12;
 
     // ── Bucks breakdown ───────────────────────────────────────────────────
-    const bucksStyle = { fontSize: '20px', color: '#aaccff', fontFamily: 'Arial' };
+    const bucksStyle = { fontSize: `${Math.min(20, w * 0.025)}px`, color: '#aaccff', fontFamily: 'Arial' };
     const breakdownLines = [`Race finish: 💵 ${BUCKS_BY_POSITION[position - 1] || 5}`];
     if (accuracy === 100) breakdownLines.push(`Perfect accuracy: 💵 ${BUCKS_ACCURACY_BONUS}`);
     if (streak >= 5) breakdownLines.push(`Streak bonus: 💵 ${BUCKS_STREAK_BONUS}`);
 
     for (const line of breakdownLines) {
       this.add.text(cx, y, line, bucksStyle).setOrigin(0.5);
-      y += 30;
+      y += h * 0.06;
     }
 
-    y += 20;
+    y += h * 0.04;
 
     // Total bucks earned
     this.add.text(cx, y, `Total: 💵 ${bucksEarned}`, {
-      fontSize: '32px',
+      fontSize: `${Math.min(32, w * 0.04)}px`,
       fontStyle: 'bold',
       color: '#ffdd00',
       fontFamily: 'Arial Black, Arial',
@@ -90,18 +94,18 @@ export class ResultsScene extends Phaser.Scene {
       strokeThickness: 3,
     }).setOrigin(0.5);
 
-    y += 30;
+    y += h * 0.06;
 
     // Wallet balance
     const totalBucks = progress ? progress.bucks : bucksEarned;
     this.add.text(cx, y, `Wallet: 💵 ${totalBucks}`, {
-      fontSize: '18px',
+      fontSize: `${Math.min(18, w * 0.023)}px`,
       color: '#88aa88',
       fontFamily: 'Arial',
     }).setOrigin(0.5);
 
     // ── RACE AGAIN button ─────────────────────────────────────────────────
-    const btnY = GAME_HEIGHT - 70;
+    const btnY = h - SAFE_PADDING - 36;
     const btnBg = this.add.rectangle(cx, btnY, 260, 64, 0xff4400)
       .setInteractive({ useHandCursor: true })
       .setStrokeStyle(4, 0xffffff);
@@ -131,16 +135,15 @@ export class ResultsScene extends Phaser.Scene {
     // ── Celebrate if 1st place ────────────────────────────────────────────
     if (position === 1) {
       this.cameras.main.flash(400, 255, 215, 0);
-      // Confetti-like particles
       for (let i = 0; i < 30; i++) {
-        const px = Phaser.Math.Between(50, GAME_WIDTH - 50);
+        const px = Phaser.Math.Between(SAFE_PADDING, w - SAFE_PADDING);
         const py = Phaser.Math.Between(-20, -200);
         const colors = [0xffd700, 0xff4444, 0x44ff44, 0x4488ff, 0xff88ff];
         const c = colors[i % colors.length];
         const particle = this.add.rectangle(px, py, 8, 8, c).setDepth(50);
         this.tweens.add({
           targets: particle,
-          y: GAME_HEIGHT + 20,
+          y: h + 20,
           x: px + Phaser.Math.Between(-60, 60),
           angle: Phaser.Math.Between(0, 360),
           duration: Phaser.Math.Between(1500, 3000),

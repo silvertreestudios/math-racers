@@ -1,16 +1,16 @@
 /**
  * RaceScene — Core gameplay: side-scrolling race with math problems.
+ * All positions proportional to actual screen size.
  */
 import Phaser from 'phaser';
 import { MathEngine } from '../systems/MathEngine.js';
 import { AIRacer } from '../systems/AIRacer.js';
 import {
-  GAME_WIDTH, GAME_HEIGHT,
-  PROBLEMS_PER_RACE,
+  SAFE_PADDING,
   PLAYER_BASE_SPEED, CORRECT_BOOST, CORRECT_BOOST_DURATION,
   WRONG_PENALTY, WRONG_PENALTY_DURATION, CORRECT_FLASH_DURATION,
   AI_SPEEDS, STREAK_NITRO, STREAK_TURBO, STREAK_SUPERCHARGE, STREAK_BOOST,
-  FINISH_LINE_X, LANE_Y, CAR_COLORS, CAR_NAMES,
+  FINISH_LINE_X, CAR_COLORS, CAR_NAMES,
   PARALLAX_SPEEDS,
 } from '../config/constants.js';
 
@@ -20,6 +20,9 @@ export class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    this.w = this.scale.width;
+    this.h = this.scale.height;
+
     this.mathEngine = new MathEngine();
     this.aiRacers = [new AIRacer(0), new AIRacer(1), new AIRacer(2)];
 
@@ -30,6 +33,7 @@ export class RaceScene extends Phaser.Scene {
     this.playerFinishTime = null;
     this.speedModifier = 0;
     this.speedModTimer = 0;
+    this._endScheduled = false;
 
     // Race state
     this.problemsAnswered = 0;
@@ -70,7 +74,7 @@ export class RaceScene extends Phaser.Scene {
         this.playerWorldX = FINISH_LINE_X;
         this.playerFinished = true;
         this.playerFinishTime = time;
-        this.finishOrder.push(0); // player index
+        this.finishOrder.push(0);
       }
     }
 
@@ -80,7 +84,7 @@ export class RaceScene extends Phaser.Scene {
       if (!ai.finished) {
         ai.update(delta, FINISH_LINE_X);
         if (ai.finished) {
-          this.finishOrder.push(i + 1); // ai indices 1,2,3
+          this.finishOrder.push(i + 1);
         }
       }
     }
@@ -97,7 +101,6 @@ export class RaceScene extends Phaser.Scene {
     // Check race end — end shortly after player finishes
     if (this.playerFinished && !this._endScheduled) {
       this._endScheduled = true;
-      // Give a brief moment then end, don't wait for all AI
       this.time.delayedCall(1500, () => this._endRace());
     }
   }
@@ -105,12 +108,13 @@ export class RaceScene extends Phaser.Scene {
   // ─── Background ──────────────────────────────────────────────────────────
 
   _createBackground() {
+    const { w, h } = this;
     this.parallaxLayers = [];
 
     // Sky (static)
     const gfx = this.add.graphics();
     gfx.fillGradientStyle(0x87ceeb, 0x87ceeb, 0x4488cc, 0x4488cc, 1);
-    gfx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT * 0.45);
+    gfx.fillRect(0, 0, w, h * 0.45);
     gfx.setDepth(-10);
 
     // Mountains layer
@@ -126,64 +130,63 @@ export class RaceScene extends Phaser.Scene {
     // Road
     const road = this.add.graphics().setDepth(-5);
     road.fillStyle(0x555566);
-    road.fillRect(0, GAME_HEIGHT * 0.40, GAME_WIDTH, GAME_HEIGHT * 0.30);
+    road.fillRect(0, h * 0.40, w, h * 0.30);
 
     // Lane lines
     road.lineStyle(2, 0xffffff, 0.3);
     for (let i = 1; i < 4; i++) {
-      const y = GAME_HEIGHT * 0.40 + (GAME_HEIGHT * 0.30 / 4) * i;
-      for (let x = 0; x < GAME_WIDTH; x += 40) {
+      const y = h * 0.40 + (h * 0.30 / 4) * i;
+      for (let x = 0; x < w; x += 40) {
         road.lineBetween(x, y, x + 20, y);
       }
     }
 
     // Road dash lines (animated)
     this.roadDashes = [];
-    for (let i = 0; i < 12; i++) {
-      const dash = this.add.rectangle(i * 75, GAME_HEIGHT * 0.55, 30, 4, 0xffffff, 0.5).setDepth(-4);
+    for (let i = 0; i < 14; i++) {
+      const dash = this.add.rectangle(i * (w / 12), h * 0.55, 30, 4, 0xffffff, 0.5).setDepth(-4);
       this.roadDashes.push(dash);
     }
   }
 
   _drawMountains(offset) {
+    const { w, h } = this;
     const gfx = this.mountainsGfx;
     gfx.clear();
     gfx.fillStyle(0x556688, 0.7);
-    const baseY = GAME_HEIGHT * 0.45;
+    const baseY = h * 0.45;
     for (let i = 0; i < 5; i++) {
-      const cx = ((i * 220 - offset * 0.3) % (GAME_WIDTH + 300)) - 100;
+      const cx = ((i * (w / 4) - offset * 0.3) % (w + 300)) - 100;
       const peakH = 80 + (i % 3) * 30;
       gfx.fillTriangle(cx - 100, baseY, cx, baseY - peakH, cx + 100, baseY);
     }
   }
 
   _drawTrees(offset) {
+    const { w, h } = this;
     const gfx = this.treesGfx;
     gfx.clear();
-    const baseY = GAME_HEIGHT * 0.42;
-    for (let i = 0; i < 10; i++) {
-      const x = ((i * 95 - offset) % (GAME_WIDTH + 200)) - 50;
-      // Tree trunk
+    const baseY = h * 0.42;
+    for (let i = 0; i < 12; i++) {
+      const x = ((i * (w / 10) - offset) % (w + 200)) - 50;
       gfx.fillStyle(0x664422);
       gfx.fillRect(x - 3, baseY - 15, 6, 18);
-      // Tree canopy
       gfx.fillStyle(0x228833);
       gfx.fillCircle(x, baseY - 22, 12);
     }
   }
 
   _updateParallax() {
+    const { w } = this;
     const worldProgress = this.playerWorldX / FINISH_LINE_X;
 
-    // Animate road dashes
     for (const dash of this.roadDashes) {
       dash.x -= 3;
-      if (dash.x < -40) dash.x += GAME_WIDTH + 80;
+      if (dash.x < -40) dash.x += w + 80;
     }
 
-    // Parallax mountain/tree redraw
     for (const layer of this.parallaxLayers) {
-      layer.offset = worldProgress * GAME_WIDTH * 3 * layer.speed;
+      layer.offset = worldProgress * w * 3 * layer.speed;
       layer.draw(layer.offset);
     }
   }
@@ -191,13 +194,14 @@ export class RaceScene extends Phaser.Scene {
   // ─── Cars ────────────────────────────────────────────────────────────────
 
   _createCars() {
+    const { w, h } = this;
     this.carSprites = [];
 
     const lanes = [
-      GAME_HEIGHT * 0.44,
-      GAME_HEIGHT * 0.50,
-      GAME_HEIGHT * 0.56,
-      GAME_HEIGHT * 0.62,
+      h * 0.44,
+      h * 0.50,
+      h * 0.56,
+      h * 0.62,
     ];
 
     for (let i = 0; i < 4; i++) {
@@ -216,11 +220,11 @@ export class RaceScene extends Phaser.Scene {
       gfx.fillCircle(-16, 14, 7);
       gfx.fillCircle(16, 14, 7);
 
-      gfx.setPosition(60, y);
+      gfx.setPosition(SAFE_PADDING + 40, y);
       this.carSprites.push({ gfx, baseY: y, index: i });
 
       // Name tag
-      const name = this.add.text(60, y - 26, CAR_NAMES[i], {
+      const name = this.add.text(SAFE_PADDING + 40, y - 26, CAR_NAMES[i], {
         fontSize: '12px',
         color: i === 0 ? '#00ffff' : '#ffffff',
         fontFamily: 'Arial',
@@ -231,8 +235,9 @@ export class RaceScene extends Phaser.Scene {
   }
 
   _updateCarPositions() {
-    const trackStartX = 60;
-    const trackEndX = GAME_WIDTH - 60;
+    const { w } = this;
+    const trackStartX = SAFE_PADDING + 40;
+    const trackEndX = w - SAFE_PADDING - 20;
     const trackWidth = trackEndX - trackStartX;
 
     // Player car
@@ -254,9 +259,11 @@ export class RaceScene extends Phaser.Scene {
   // ─── UI ──────────────────────────────────────────────────────────────────
 
   _createUI() {
+    const { w, h } = this;
+
     // Problem text
-    this.problemText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.72, '', {
-      fontSize: '32px',
+    this.problemText = this.add.text(w / 2, h * 0.73, '', {
+      fontSize: `${Math.min(34, w * 0.045)}px`,
       fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'Arial Black, Arial',
@@ -267,23 +274,22 @@ export class RaceScene extends Phaser.Scene {
     // Answer buttons (1×4 horizontal row)
     this.answerButtons = [];
     const btnCount = 4;
-    const totalGap = 8 * (btnCount - 1);
-    const btnW = Math.floor((GAME_WIDTH - 24 - totalGap) / btnCount); // fill width with margins
-    const btnH = 48;
-    const btnY = GAME_HEIGHT * 0.88;
-    const rowStartX = 12; // left margin
+    const btnGap = 10;
+    const availableWidth = w - (SAFE_PADDING * 2);
+    const btnW = Math.floor((availableWidth - btnGap * (btnCount - 1)) / btnCount);
+    const btnH = Math.max(48, h * 0.11);
+    const btnY = h - SAFE_PADDING - btnH / 2;
 
     for (let i = 0; i < btnCount; i++) {
-      const x = rowStartX + i * (btnW + 8) + btnW / 2;
-      const y = btnY;
+      const x = SAFE_PADDING + i * (btnW + btnGap) + btnW / 2;
 
-      const bg = this.add.rectangle(x, y, btnW, btnH, 0x334466)
+      const bg = this.add.rectangle(x, btnY, btnW, btnH, 0x334466)
         .setStrokeStyle(3, 0x6688aa)
         .setInteractive({ useHandCursor: true })
         .setDepth(20);
 
-      const text = this.add.text(x, y, '', {
-        fontSize: '26px',
+      const text = this.add.text(x, btnY, '', {
+        fontSize: `${Math.min(26, btnW * 0.2)}px`,
         fontStyle: 'bold',
         color: '#ffffff',
         fontFamily: 'Arial',
@@ -295,28 +301,30 @@ export class RaceScene extends Phaser.Scene {
     }
 
     // Feedback text (shows correct answer on wrong)
-    this.feedbackText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.66, '', {
+    this.feedbackText = this.add.text(w / 2, h * 0.67, '', {
       fontSize: '22px',
       fontStyle: 'bold',
       color: '#44ff44',
       fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(22).setAlpha(0);
 
-    // Progress bar (problems answered)
-    this.progressBarBg = this.add.rectangle(GAME_WIDTH / 2, 16, GAME_WIDTH * 0.6, 12, 0x333333).setDepth(20);
+    // Progress bar (race distance)
+    const barWidth = w * 0.5;
+    this.progressBarBg = this.add.rectangle(w / 2, SAFE_PADDING + 6, barWidth, 12, 0x333333).setDepth(20);
     this.progressBarFill = this.add.rectangle(
-      GAME_WIDTH / 2 - (GAME_WIDTH * 0.6) / 2, 16, 0, 12, 0x00ff88
+      w / 2 - barWidth / 2, SAFE_PADDING + 6, 0, 12, 0x00ff88
     ).setOrigin(0, 0.5).setDepth(21);
+    this._progressBarWidth = barWidth;
 
     // Problem counter
-    this.counterText = this.add.text(GAME_WIDTH / 2, 32, '', {
-      fontSize: '14px',
+    this.counterText = this.add.text(w / 2, SAFE_PADDING + 22, '', {
+      fontSize: '13px',
       color: '#aaaaaa',
       fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(20);
 
     // Streak display
-    this.streakText = this.add.text(GAME_WIDTH - 16, 16, '', {
+    this.streakText = this.add.text(w - SAFE_PADDING, SAFE_PADDING + 6, '', {
       fontSize: '16px',
       color: '#ffaa00',
       fontFamily: 'Arial',
@@ -325,9 +333,9 @@ export class RaceScene extends Phaser.Scene {
   }
 
   _createStreakLabel() {
-    // Big centered streak label (NITRO! / TURBO! / SUPERCHARGE!)
-    this.streakLabel = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.35, '', {
-      fontSize: '42px',
+    const { w, h } = this;
+    this.streakLabel = this.add.text(w / 2, h * 0.35, '', {
+      fontSize: `${Math.min(42, w * 0.06)}px`,
       fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'Arial Black, Arial',
@@ -337,11 +345,10 @@ export class RaceScene extends Phaser.Scene {
   }
 
   _updateProgressBar() {
-    // Show race progress based on player position
+    const { w } = this;
     const fraction = Math.min(1, this.playerWorldX / FINISH_LINE_X);
-    const maxWidth = GAME_WIDTH * 0.6;
-    this.progressBarFill.width = maxWidth * fraction;
-    this.progressBarFill.setX(GAME_WIDTH / 2 - maxWidth / 2);
+    this.progressBarFill.width = this._progressBarWidth * fraction;
+    this.progressBarFill.setX(w / 2 - this._progressBarWidth / 2);
     const acc = this.problemsAnswered > 0 ? Math.round((this.correctAnswers / this.problemsAnswered) * 100) : 100;
     this.counterText.setText(`${acc}% accuracy · ${this.problemsAnswered} answered`);
   }
@@ -350,7 +357,6 @@ export class RaceScene extends Phaser.Scene {
 
   _nextProblem() {
     if (this.raceOver || this.playerFinished) {
-      // Player crossed the line — hide buttons and coast to results
       this.problemText.setText('🏁 FINISHED!');
       this._hideButtons();
       this.waitingForInput = false;
@@ -465,7 +471,7 @@ export class RaceScene extends Phaser.Scene {
     });
 
     // Screen flash
-    this.cameras.main.flash(200, 
+    this.cameras.main.flash(200,
       (bonus.color >> 16) & 0xff,
       (bonus.color >> 8) & 0xff,
       bonus.color & 0xff

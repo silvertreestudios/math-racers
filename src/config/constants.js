@@ -1,6 +1,9 @@
-// Game-wide constants
+// Reference dimensions (used for proportional calculations, not fixed canvas size)
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 450;
+
+// Safe area padding (minimum distance from screen edges for all UI)
+export const SAFE_PADDING = 20;
 
 // Race settings
 export const PROBLEMS_PER_RACE = Infinity; // Keep generating until race ends
