@@ -1,6 +1,6 @@
 // Game-wide constants
 export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 480;
+export const GAME_HEIGHT = 450;
 
 // Race settings
 export const PROBLEMS_PER_RACE = 10;

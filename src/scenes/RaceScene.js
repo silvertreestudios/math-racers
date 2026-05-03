@@ -253,8 +253,8 @@ export class RaceScene extends Phaser.Scene {
 
   _createUI() {
     // Problem text
-    this.problemText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, '', {
-      fontSize: '36px',
+    this.problemText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.72, '', {
+      fontSize: '32px',
       fontStyle: 'bold',
       color: '#ffffff',
       fontFamily: 'Arial Black, Arial',
@@ -262,40 +262,38 @@ export class RaceScene extends Phaser.Scene {
       strokeThickness: 4,
     }).setOrigin(0.5).setDepth(20);
 
-    // Answer buttons (2×2 grid)
+    // Answer buttons (1×4 horizontal row)
     this.answerButtons = [];
-    const btnW = 160;
-    const btnH = 50;
-    const gap = 10;
-    const gridStartX = GAME_WIDTH / 2 - btnW - gap / 2;
-    const gridStartY = GAME_HEIGHT * 0.74;
+    const btnCount = 4;
+    const totalGap = 8 * (btnCount - 1);
+    const btnW = Math.floor((GAME_WIDTH - 24 - totalGap) / btnCount); // fill width with margins
+    const btnH = 48;
+    const btnY = GAME_HEIGHT * 0.88;
+    const rowStartX = 12; // left margin
 
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 2; col++) {
-        const x = gridStartX + col * (btnW + gap) + btnW / 2;
-        const y = gridStartY + row * (btnH + gap) + btnH / 2;
+    for (let i = 0; i < btnCount; i++) {
+      const x = rowStartX + i * (btnW + 8) + btnW / 2;
+      const y = btnY;
 
-        const bg = this.add.rectangle(x, y, btnW, btnH, 0x334466)
-          .setStrokeStyle(3, 0x6688aa)
-          .setInteractive({ useHandCursor: true })
-          .setDepth(20);
+      const bg = this.add.rectangle(x, y, btnW, btnH, 0x334466)
+        .setStrokeStyle(3, 0x6688aa)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(20);
 
-        const text = this.add.text(x, y, '', {
-          fontSize: '28px',
-          fontStyle: 'bold',
-          color: '#ffffff',
-          fontFamily: 'Arial',
-        }).setOrigin(0.5).setDepth(21);
+      const text = this.add.text(x, y, '', {
+        fontSize: '26px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+      }).setOrigin(0.5).setDepth(21);
 
-        const idx = row * 2 + col;
-        bg.on('pointerdown', () => this._onAnswer(idx));
+      bg.on('pointerdown', () => this._onAnswer(i));
 
-        this.answerButtons.push({ bg, text, idx });
-      }
+      this.answerButtons.push({ bg, text, idx: i });
     }
 
     // Feedback text (shows correct answer on wrong)
-    this.feedbackText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.65, '', {
+    this.feedbackText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.66, '', {
       fontSize: '22px',
       fontStyle: 'bold',
       color: '#44ff44',
