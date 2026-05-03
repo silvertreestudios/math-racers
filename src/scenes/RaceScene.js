@@ -94,8 +94,8 @@ export class RaceScene extends Phaser.Scene {
     // Update progress bar
     this._updateProgressBar();
 
-    // Check race end
-    if (this.finishOrder.length === 4 || (this.playerFinished && this.problemsAnswered >= PROBLEMS_PER_RACE)) {
+    // Check race end — all cars crossed finish
+    if (this.finishOrder.length === 4) {
       this._endRace();
     }
   }
@@ -335,23 +335,19 @@ export class RaceScene extends Phaser.Scene {
   }
 
   _updateProgressBar() {
-    const fraction = this.problemsAnswered / PROBLEMS_PER_RACE;
+    // Show race progress based on player position
+    const fraction = Math.min(1, this.playerWorldX / FINISH_LINE_X);
     const maxWidth = GAME_WIDTH * 0.6;
     this.progressBarFill.width = maxWidth * fraction;
     this.progressBarFill.setX(GAME_WIDTH / 2 - maxWidth / 2);
-    this.counterText.setText(`${this.problemsAnswered} / ${PROBLEMS_PER_RACE}`);
+    const acc = this.problemsAnswered > 0 ? Math.round((this.correctAnswers / this.problemsAnswered) * 100) : 100;
+    this.counterText.setText(`${acc}% accuracy · ${this.problemsAnswered} answered`);
   }
 
   // ─── Problem Flow ────────────────────────────────────────────────────────
 
   _nextProblem() {
-    if (this.problemsAnswered >= PROBLEMS_PER_RACE) {
-      // All problems answered — wait for everyone to finish
-      this.problemText.setText('GO GO GO!');
-      this._hideButtons();
-      this.waitingForInput = false;
-      return;
-    }
+    if (this.raceOver) return;
 
     const problem = this.mathEngine.generateProblem({ min: 1, max: 9 });
     this.currentProblem = problem;

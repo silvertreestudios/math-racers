@@ -3,7 +3,7 @@ export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 450;
 
 // Race settings
-export const PROBLEMS_PER_RACE = 10;
+export const PROBLEMS_PER_RACE = Infinity; // Keep generating until race ends
 export const ANSWER_COUNT = 4;
 
 // Car physics
