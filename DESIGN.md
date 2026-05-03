@@ -11,11 +11,11 @@ The game is designed to **grow with the player** — from basic addition through
 ## 1. Core Concept
 
 ### The Pitch
-> "Solve math problems to make your car go fast. Get streaks for nitro. Win races, earn trophies, unlock cars."
+> "Solve math problems to make your car go fast. Get streaks for nitro. Win races, earn bucks, buy faster cars."
 
 ### Core Loop
 ```
-Pick a Race → Solve Problems → Car Moves → Finish → Earn Trophies → Unlock Stuff
+Pick a Race → Solve Problems → Car Moves → Finish → Earn Bucks → Buy Cars & Unlock Classes
 ```
 
 ### Design Pillars
@@ -28,16 +28,18 @@ Pick a Race → Solve Problems → Car Moves → Finish → Earn Trophies → Un
 
 ## 2. Racing Classes (Math Operations)
 
-Each math operation is a **racing class** with its own car type and season of tracks. Players unlock classes by earning enough trophies in the previous one.
+Each math operation is a **racing class** with its own car type and season of tracks. Players unlock classes by saving up enough **bucks** to buy the next car class.
 
-| Class | Operation | Car Type | Unlock |
-|-------|-----------|----------|--------|
-| 🟢 Rookie League | Addition | Go-Karts | Start here |
-| 🔵 Amateur Circuit | Subtraction | Stock Cars | 🏆×10 from Rookie |
-| 🟡 Pro Series | Multiplication | Sports Cars | 🏆×10 from Amateur |
-| 🔴 Championship | Division | Muscle Cars | 🏆×10 from Pro |
-| ⚡ Superclass | Exponents & Roots | Supercars | 🏆×10 from Championship |
-| 🏁 Grand Prix | Order of Operations / Formulas | Formula 1 | 🏆×10 from Superclass |
+| Class | Operation | Car Type | Cost to Unlock |
+|-------|-----------|----------|----------------|
+| 🟢 Rookie League | Addition | Go-Karts | Free (start here) |
+| 🔵 Amateur Circuit | Subtraction | Stock Cars | 💵 500 |
+| 🟡 Pro Series | Multiplication | Sports Cars | 💵 1,500 |
+| 🔴 Championship | Division | Muscle Cars | 💵 3,000 |
+| ⚡ Superclass | Exponents & Roots | Supercars | 💵 5,000 |
+| 🏁 Grand Prix | Order of Operations / Formulas | Formula 1 | 💵 10,000 |
+
+_Costs are tunable — will balance during playtesting._
 
 ### Track Difficulty Progression (per class)
 
@@ -69,12 +71,27 @@ Unlock the next track by placing **top 2** in the current one.
 5. **Race ends** after 10 problems (or when all cars cross the finish line)
 6. **Results screen:** Finishing position, time, accuracy %, streak info, trophies earned
 
-### Scoring & Trophies
-- 🥇 1st place: 3 trophies
-- 🥈 2nd place: 2 trophies
-- 🥉 3rd place: 1 trophy
-- 4th place: 0 trophies (but you still finished!)
-- **Bonus trophy** for 100% accuracy on any race
+### Bucks (Currency)
+Bucks are the in-game currency earned from every race. More bucks for higher placement:
+- 🥇 1st place: 💵 50
+- 🥈 2nd place: 💵 30
+- 🥉 3rd place: 💵 15
+- 4th place: 💵 5 (you still get something!)
+- **Accuracy bonus:** +💵 25 for 100% accuracy
+- **Streak bonus:** +💵 10 for any streak ≥ 5
+
+Bucks are spent in the **Garage** on new cars, car skins, and unlocking new racing classes. This gives players a reason to **replay earlier tracks** — grind bucks on races they're good at to save up for the next class.
+
+_All amounts are tunable — will balance during playtesting._
+
+### Track Trophies
+Each track has a **trophy** with 4 tiers based on your best finish:
+- 🏆 **Gold** — 1st place finish
+- 🥈 **Silver** — 2nd place finish
+- 🥉 **Bronze** — 3rd place finish
+- 🏅 **Participant** — 4th place finish
+
+Trophies are per-track records. Replay a track and finish higher to upgrade the trophy. They're for bragging rights / completionism, not currency.
 
 ### AI Opponents
 - 3 AI cars per race, each with a name and personality
@@ -122,42 +139,45 @@ Difficulty adjustments within a track:
 
 ## 6. Progression & Unlocks
 
-### Garage
-- Each racing class starts with a **default car**
-- Earn trophies to unlock **new car skins** (palette swaps, decals, body kits)
-- ~3 unlockable skins per class for MVP
-- Later: parts upgrades (engine, tires, paint) that give small cosmetic differences
+### Garage (Shop)
+- **Buy new racing classes** — spend bucks to unlock the next car type + its tracks
+- **Buy car skins** — palette swaps, decals, body kits within a class (💵 50-200 each)
+- Each class has 1 default car + ~3 purchasable skins
+- Later: parts upgrades (engine, tires, paint) as cosmetic purchases
 
-### Trophy Case
-- Visual display of all trophies earned
+### Trophy Wall
+- Visual grid showing every track's trophy (gold/silver/bronze/participant)
 - Track records (best time, best accuracy per track)
-- Total trophies across all classes
+- Motivates completionists to gold every track
 
-### Season Standings
-- Per-class leaderboard showing points across all tracks
-- "Complete the season" by placing well across all 5 tracks
+### Wallet
+- Running bucks total displayed in UI header at all times
+- Transaction history not needed for MVP — just the balance
 
 ---
 
 ## 7. Screen Flow
 
 ```
+### Full Game (post-MVP)
+```
 ┌─────────┐
 │  TITLE  │ → Title screen with logo, "START" button, music
 └────┬────┘
      ▼
 ┌─────────┐
-│ GARAGE  │ → Car select (shows unlocked cars for current class)
+│ GARAGE  │ → Car select + shop (buy cars, skins, new classes)
+│  SHOP   │   Shows bucks balance, locked items grayed with price
 └────┬────┘
      ▼
 ┌─────────┐
-│ CLASS   │ → Pick racing class (go-karts, stock cars, etc.)
-│ SELECT  │   Locked classes shown grayed out with trophy requirement
+│ CLASS   │ → Pick racing class (unlocked ones only)
+│ SELECT  │
 └────┬────┘
      ▼
 ┌─────────┐
 │ TRACK   │ → Pick a track within the class
-│ SELECT  │   Shows best finish, locked tracks grayed
+│ SELECT  │   Shows trophy tier, locked tracks grayed
 └────┬────┘
      ▼
 ┌─────────┐
@@ -165,13 +185,30 @@ Difficulty adjustments within a track:
 └────┬────┘
      ▼
 ┌─────────┐
-│ RESULTS │ → Position, accuracy, trophies earned, "NEXT RACE" or "GARAGE"
+│ RESULTS │ → Position, accuracy, bucks earned, trophy tier
+│         │   "RACE AGAIN" / "NEXT TRACK" / "GARAGE"
 └────┬────┘
      ▼
 ┌─────────┐
-│ TROPHY  │ → (optional) View trophy case / records
-│  CASE   │
+│ TROPHY  │ → (optional) View trophy wall / records
+│  WALL   │
 └─────────┘
+```
+
+### MVP (v0.1)
+```
+┌─────────┐
+│  TITLE  │ → Logo + "RACE!" button
+└────┬────┘
+     ▼
+┌─────────┐
+│  RACE   │ → Core gameplay (addition, single difficulty)
+└────┬────┘
+     ▼
+┌─────────┐
+│ RESULTS │ → Position, accuracy, bucks earned → "RACE AGAIN"
+└─────────┘
+```
 ```
 
 ---
@@ -273,26 +310,25 @@ math-racers/
     "version": 1,
     "player": {
       "name": "Player 1",
-      "totalTrophies": 0,
+      "bucks": 0,
       "selectedCar": "kart-default"
     },
     "classes": {
       "addition": {
         "unlocked": true,
         "tracks": {
-          "starter-speedway": { "bestPosition": null, "bestAccuracy": null, "trophies": 0 },
-          "clover-circuit": { "unlocked": false },
-          ...
+          "starter-speedway": { "bestPosition": null, "bestAccuracy": null, "trophy": null },
+          "clover-circuit": { "unlocked": false }
         },
-        "unlockedCars": ["kart-default"]
-      },
-      ...
+        "ownedCars": ["kart-default"]
+      }
     },
     "stats": {
       "totalRaces": 0,
       "totalCorrect": 0,
       "totalAnswered": 0,
       "bestStreak": 0,
+      "totalBucksEarned": 0,
       "recentAnswers": []
     }
   }
@@ -303,37 +339,39 @@ math-racers/
 
 ## 11. MVP Scope (v0.1)
 
-**In scope:**
-- [x] Phaser 3 + Vite project scaffold
-- [ ] Title screen
-- [ ] One racing class: Addition (Go-Karts)
-- [ ] 5 tracks with progressive difficulty
-- [ ] 10 problems per race, 4 multiple-choice answers
-- [ ] Smart distractor generation
-- [ ] Basic adaptive difficulty
-- [ ] Side-scrolling race view with 4 cars
-- [ ] Streak bonuses (visual + speed boost)
-- [ ] 3 AI opponents with adaptive speed
-- [ ] Results screen with position + accuracy
-- [ ] Trophy system (earn + display)
-- [ ] Track unlocking (top 2 to advance)
-- [ ] Car select (1 default + 2 unlockable skins)
-- [ ] LocalStorage save/load
-- [ ] Sound effects (correct, wrong, nitro, race start/finish)
-- [ ] Background music (1 race track, 1 menu track)
-- [ ] Touch-optimized UI (48dp+ touch targets)
+**Goal:** Bare-minimum playable game — the core race loop only.
 
-**Out of scope for MVP (future features):**
-- [ ] Subtraction, multiplication, division classes
-- [ ] Exponents, roots, order of operations
-- [ ] Parts/upgrade system
-- [ ] Animated car customization
-- [ ] Online leaderboards
-- [ ] Multiple save profiles
-- [ ] Capacitor APK build for Kindle app store
-- [ ] Accessibility features (colorblind mode, dyslexia font)
-- [ ] Parent dashboard (track kid's progress/weak areas)
-- [ ] "Story mode" with character dialogue between races
+**In scope:**
+- [ ] Phaser 3 + Vite project scaffold
+- [ ] **Title screen** — logo + "RACE!" button
+- [ ] **Race screen** — the core gameplay:
+  - Addition problems only (single + single digit to start)
+  - 10 problems per race, 4 multiple-choice answers
+  - Smart distractor generation
+  - Player car + 3 AI cars (simple constant-speed AI)
+  - Side-scrolling race view
+  - Correct = speed boost, wrong = slow down + flash answer
+  - Streak bonuses (visual + speed boost at 3/5/10)
+- [ ] **Results screen** — position, accuracy, bucks earned, "RACE AGAIN" button
+- [ ] Bucks earned per race (displayed on results, persisted)
+- [ ] LocalStorage save (bucks balance + stats only)
+- [ ] Placeholder art (colored rectangles for cars, simple gradient background)
+- [ ] Touch-optimized UI (48dp+ touch targets, 2×2 answer grid)
+
+**Explicitly NOT in MVP:**
+- ❌ Garage / shop / car selection
+- ❌ Track selection (one hardcoded track)
+- ❌ Class selection / multiple operations
+- ❌ Trophy wall
+- ❌ Adaptive difficulty (fixed difficulty for MVP)
+- ❌ Sound effects / music
+- ❌ AI-generated art assets
+- ❌ Subtraction, multiplication, division, exponents, OoO
+- ❌ Car skins / unlockables
+- ❌ Multiple save profiles
+- ❌ Capacitor APK build
+
+**The test:** Can a kid tap "RACE", answer 10 addition problems, watch cars move, see who won, earn some bucks, and tap "RACE AGAIN"? If yes, MVP is done.
 
 ---
 
