@@ -17,8 +17,9 @@ export const WRONG_PENALTY = 50;            // px/s reduction
 export const WRONG_PENALTY_DURATION = 800;  // ms
 export const CORRECT_FLASH_DURATION = 1200; // ms show correct answer after wrong
 
-// AI speeds (px/s constant speed)
-export const AI_SPEEDS = [110, 100, 90]; // Rival 1 (hardest), 2, 3 (easiest)
+// AI defaults (used as fallbacks, actual AI calibrated from player stats)
+export const AI_DEFAULT_ACCURACY = 0.8;
+export const AI_DEFAULT_ANSWER_TIME_MS = 3000;
 
 // Streak thresholds & bonuses
 export const STREAK_NITRO = 3;

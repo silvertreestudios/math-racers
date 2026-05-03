@@ -24,7 +24,17 @@ export class RaceScene extends Phaser.Scene {
     this.h = this.scale.height;
 
     this.mathEngine = new MathEngine();
-    this.aiRacers = [new AIRacer(0), new AIRacer(1), new AIRacer(2)];
+
+    // Get player historic stats for AI calibration
+    const progress = this.registry.get('progress');
+    const playerAccuracy = progress ? progress.accuracy : 0.8;
+    const playerAvgTime = progress ? (progress.avgAnswerTimeMs || 3000) : 3000;
+
+    this.aiRacers = [
+      new AIRacer(0, playerAccuracy, playerAvgTime),
+      new AIRacer(1, playerAccuracy, playerAvgTime),
+      new AIRacer(2, playerAccuracy, playerAvgTime),
+    ];
 
     // Player state
     this.playerWorldX = 0;
@@ -43,6 +53,8 @@ export class RaceScene extends Phaser.Scene {
     this.raceOver = false;
     this.waitingForInput = true;
     this.finishOrder = [];
+    this.problemShownAt = 0;       // timestamp when current problem appeared
+    this.totalAnswerTimeMs = 0;    // cumulative time spent answering
 
     // Draw everything
     this._createBackground();
@@ -377,6 +389,7 @@ export class RaceScene extends Phaser.Scene {
 
     this.waitingForInput = true;
     this.feedbackText.setAlpha(0);
+    this.problemShownAt = performance.now();
   }
 
   _onAnswer(idx) {
@@ -388,6 +401,7 @@ export class RaceScene extends Phaser.Scene {
     const correct = chosen === problem.correct;
 
     this.problemsAnswered++;
+    this.totalAnswerTimeMs += performance.now() - this.problemShownAt;
 
     if (correct) {
       this._onCorrect(idx);
@@ -516,6 +530,7 @@ export class RaceScene extends Phaser.Scene {
         correct: this.correctAnswers,
         answered: this.problemsAnswered,
         streak: this.bestStreak,
+        totalAnswerTimeMs: this.totalAnswerTimeMs,
       });
     });
   }

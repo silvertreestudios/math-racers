@@ -22,7 +22,7 @@ export class ResultsScene extends Phaser.Scene {
     const h = this.scale.height;
     const cx = w / 2;
 
-    const { position, correct, answered, streak } = this.raceData;
+    const { position, correct, answered, streak, totalAnswerTimeMs } = this.raceData;
     const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
 
     // ── Calculate bucks ───────────────────────────────────────────────────
@@ -33,7 +33,7 @@ export class ResultsScene extends Phaser.Scene {
     // Save progress
     const progress = this.registry.get('progress');
     if (progress) {
-      progress.recordRace({ position, correct, answered, streak, bucksEarned });
+      progress.recordRace({ position, correct, answered, streak, bucksEarned, totalAnswerTimeMs });
     }
 
     // ── Background ────────────────────────────────────────────────────────
