@@ -74,6 +74,7 @@ function defaultSave() {
     },
     classState,
     trackState,
+    garage: {},  // keyed by classId: { color: null, ownedAttachments: [], equipped: [] }
   };
 }
 
@@ -297,6 +298,17 @@ export class ProgressManager {
     if (!('winStreakTrackId' in data.stats)) {
       data.stats.winStreakTrackId = null;
       data.stats.winStreak = 0; // reset — old streak had no track context
+    }
+    // Ensure garage data exists (migration from saves without it)
+    this._ensureGarage(data);
+  }
+
+  _ensureGarage(data) {
+    if (!data.garage) data.garage = {};
+    for (const classId of Object.keys(CLASSES)) {
+      if (!data.garage[classId]) {
+        data.garage[classId] = { color: null, ownedAttachments: [], equipped: [] };
+      }
     }
   }
 
@@ -532,8 +544,46 @@ export class ProgressManager {
     return sum / withTime.length;
   }
 
+  // ─── Garage / Customization ──────────────────────────────────────────────
+
+  getCarCustomization(classId) {
+    const g = this.data.garage[classId] || { color: null, equipped: [] };
+    return { color: g.color, equipped: g.equipped || [] };
+  }
+
+  purchaseColor(classId, color) {
+    if (this.data.player.bucks < 10000) return false;
+    this.data.player.bucks -= 10000;
+    if (!this.data.garage[classId]) {
+      this.data.garage[classId] = { color: null, ownedAttachments: [], equipped: [] };
+    }
+    this.data.garage[classId].color = color;
+    this._save();
+    return true;
+  }
+
+  purchaseAttachment(classId, attachmentId) {
+    if (this.data.player.bucks < 10000) return false;
+    const g = this.data.garage[classId];
+    if (!g) return false;
+    if (g.ownedAttachments.includes(attachmentId)) return false; // already owned
+    this.data.player.bucks -= 10000;
+    g.ownedAttachments.push(attachmentId);
+    this._save();
+    return true;
+  }
+
+  toggleAttachment(classId, attachmentId) {
+    const g = this.data.garage[classId];
+    if (!g) return;
+    if (!g.equipped) g.equipped = [];
+    const idx = g.equipped.indexOf(attachmentId);
+    if (idx >= 0) g.equipped.splice(idx, 1);
+    else g.equipped.push(attachmentId);
+    this._save();
+  }
+
   reset() {
-    this.data = defaultSave();
     this._save();
   }
 
