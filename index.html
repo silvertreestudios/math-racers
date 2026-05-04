@@ -104,10 +104,38 @@
     window.addEventListener('resize', setRealViewport);
     window.addEventListener('orientationchange', () => setTimeout(setRealViewport, 100));
 
-    // Try to lock orientation to landscape
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {});
+    // Lock orientation to landscape via Fullscreen + Screen Orientation API
+    // Most mobile browsers only allow orientation lock in fullscreen mode
+    function lockLandscape() {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
     }
+
+    // Try immediately (works on some browsers)
+    lockLandscape();
+
+    // On first user interaction, go fullscreen and lock orientation
+    function requestFullscreenLock() {
+      const el = document.documentElement;
+      const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (rfs) {
+        rfs.call(el).then(() => {
+          lockLandscape();
+        }).catch(() => {});
+      }
+      // Only do this once
+      document.removeEventListener('click', requestFullscreenLock);
+      document.removeEventListener('touchstart', requestFullscreenLock);
+    }
+
+    document.addEventListener('click', requestFullscreenLock, { once: true });
+    document.addEventListener('touchstart', requestFullscreenLock, { once: true });
+
+    // Re-lock on fullscreen change (in case user exits and re-enters)
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) lockLandscape();
+    });
   </script>
 </body>
 </html>
