@@ -334,8 +334,10 @@ Not yet implemented. Planned:
 - Mixed-operation challenges
 
 ### Phase 4 — Distribution
-- Android APK via Capacitor
-- Amazon Appstore / sideload
+- ✅ Android APK (WebView wrapper, auto-built via GitHub Actions)
+- ✅ Amazon Kindle sideload
+- iOS app (Capacitor or WKWebView wrapper, requires macOS + Apple Developer account)
+- Amazon Appstore submission
 - Parent dashboard, multiple profiles per device
 
 ### Dream Features
