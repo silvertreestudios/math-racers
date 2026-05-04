@@ -141,9 +141,9 @@ export class ProgressManager {
         raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           source = 'localStorage';
-          console.log(`[PM] _load: found ${raw.length} bytes in localStorage`);
+          console.log(`[PM] _load: found ${raw.length} bytes in localStorage, origin=${location.origin}`);
         } else {
-          console.log(`[PM] _load: localStorage key "${STORAGE_KEY}" returned null/empty`);
+          console.log(`[PM] _load: localStorage key "${STORAGE_KEY}" returned null/empty, origin=${location.origin}, keys=[${Object.keys(localStorage).join(',')}]`);
         }
       } catch (e) {
         console.warn('[PM] _load: localStorage.getItem threw', e);
@@ -184,7 +184,13 @@ export class ProgressManager {
     // Always write to localStorage
     try {
       localStorage.setItem(STORAGE_KEY, json);
-      console.log(`[PM] _save: localStorage write OK, bucks=${bucks}`);
+      // Immediate read-back to verify the round-trip
+      const verify = localStorage.getItem(STORAGE_KEY);
+      if (verify === json) {
+        console.log(`[PM] _save: localStorage write+verify OK, bucks=${bucks}, key="${STORAGE_KEY}", origin=${location.origin}`);
+      } else {
+        console.warn(`[PM] _save: localStorage VERIFY MISMATCH — wrote ${json.length} bytes but read back ${verify ? verify.length : 'null'} bytes`);
+      }
     } catch (e) {
       console.warn(`[PM] _save: localStorage write FAILED, bucks=${bucks}`, e);
     }
