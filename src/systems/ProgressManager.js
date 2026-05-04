@@ -1,11 +1,18 @@
 /**
- * ProgressManager — handles LocalStorage persistence with cookie fallback.
+ * ProgressManager — handles persistence across LocalStorage, IndexedDB, and cookies.
  *
- * Storage strategy:
- *  - Non-Silk browsers: LocalStorage only.
- *  - Silk browser (Amazon Kids): dual-write to BOTH LocalStorage AND cookies.
- *    Cookies persist across Silk sessions in Amazon Kids profiles even when
- *    localStorage is cleared between sessions. Reads prefer cookies.
+ * Storage strategy (all three written on every save):
+ *  - LocalStorage: fast synchronous read on boot; primary source of truth.
+ *  - IndexedDB: async fallback used when localStorage is empty on load
+ *    (handles browsers/modes where localStorage is cleared between sessions).
+ *  - Cookies (Silk/Amazon Kids only): dual-write for Kindle Fire Amazon Kids
+ *    profiles where localStorage is cleared between sessions.
+ *
+ * Boot sequence:
+ *  1. Constructor runs _load() synchronously: localStorage → cookies → default.
+ *  2. _initIDB() runs async: opens IDB, reads the saved record.
+ *     If localStorage was empty but IDB has data, this.data is replaced with
+ *     the IDB data and re-saved to localStorage for next time.
  *
  * Cookie chunking: cookies are limited to ~4096 bytes per cookie. The save
  * JSON is split into 3500-byte chunks and stored as mathRacersSave_0,
@@ -20,6 +27,9 @@ const COOKIE_COUNT = 'mathRacersSave_n';
 const COOKIE_CHUNK = 3500;
 const COOKIE_TTL   = 60 * 60 * 24 * 365; // 1 year in seconds
 const SCHEMA_VERSION = 2;
+const IDB_NAME     = 'mathRacersDB';
+const IDB_STORE    = 'saves';
+const IDB_KEY      = 'main';
 
 function defaultSave() {
   // Build default track state: first track of addition is unlocked, all others locked
@@ -71,8 +81,83 @@ export class ProgressManager {
     this._useCookies = /Silk|SilkBrowser/i.test(
       (typeof navigator !== 'undefined' ? navigator.userAgent : '')
     );
+    this._loadedFromSync = false; // set true if localStorage/cookies had data
     this.data = this._load();
-    console.log(`[PM] constructor: instance created, bucks=${this.data.player.bucks}, useCookies=${this._useCookies}`);
+    console.log(`[PM] constructor: instance created, bucks=${this.data.player.bucks}, useCookies=${this._useCookies}, syncLoaded=${this._loadedFromSync}`);
+
+    // Async IDB init: if sync load found nothing, try IDB as fallback
+    this._idb = null; // will hold the open IDBDatabase once ready
+    this._initIDB();
+  }
+
+  // ─── IndexedDB helpers ───────────────────────────────────────────────────
+
+  /** Open (or create) the IDB database. Returns a Promise<IDBDatabase>. */
+  _openIDB() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in globalThis)) { reject(new Error('IDB not available')); return; }
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore(IDB_STORE);
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror   = (e) => reject(e.target.error);
+    });
+  }
+
+  /** Write data object to IDB. Returns a Promise. */
+  _idbWrite(dataObj) {
+    return this._openIDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(dataObj, IDB_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror    = (e) => reject(e.target.error);
+    }));
+  }
+
+  /** Read data object from IDB. Returns a Promise<object|null>. */
+  _idbRead() {
+    return this._openIDB().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+      req.onsuccess = (e) => resolve(e.target.result || null);
+      req.onerror   = (e) => reject(e.target.error);
+    }));
+  }
+
+  /**
+   * Async IDB bootstrap: opens IDB and, if the sync load found no data,
+   * recovers from IDB if it has a valid save. The recovered data is then
+   * re-saved to localStorage so subsequent loads are fast and synchronous.
+   */
+  _initIDB() {
+    this._idbRead()
+      .then(idbData => {
+        if (!idbData) {
+          console.log('[PM] IDB: no saved data found in IndexedDB');
+          return;
+        }
+        console.log(`[PM] IDB: found saved data, bucks=${idbData.player?.bucks ?? '?'}`);
+
+        if (!this._loadedFromSync) {
+          // localStorage/cookies were empty — recover from IDB
+          console.log('[PM] IDB: recovering from IndexedDB (localStorage was empty)');
+          if (idbData.version !== SCHEMA_VERSION) {
+            // migrate
+            const fresh = defaultSave();
+            if (idbData.player && typeof idbData.player.bucks === 'number') {
+              fresh.player.bucks = idbData.player.bucks;
+            }
+            this.data = fresh;
+          } else {
+            this._ensureKeys(idbData);
+            this.data = idbData;
+          }
+          // Re-save to localStorage so next load is synchronous
+          this._save();
+        }
+      })
+      .catch(e => console.warn('[PM] IDB: _initIDB failed', e));
   }
 
   // ─── Cookie helpers ──────────────────────────────────────────────────────
@@ -155,6 +240,8 @@ export class ProgressManager {
       return defaultSave();
     }
 
+    this._loadedFromSync = true;
+
     try {
       const parsed = JSON.parse(raw);
       // Migrate from schema v1 or any older version
@@ -194,6 +281,11 @@ export class ProgressManager {
     } catch (e) {
       console.warn(`[PM] _save: localStorage write FAILED, bucks=${bucks}`, e);
     }
+
+    // Async write to IndexedDB (belt-and-suspenders — survives localStorage clears)
+    this._idbWrite(this.data)
+      .then(() => console.log(`[PM] _save: IDB write OK, bucks=${bucks}`))
+      .catch(e => console.warn('[PM] _save: IDB write failed', e));
 
     // Dual-write to cookies on Silk for persistence across Amazon Kids sessions
     if (this._useCookies) {
