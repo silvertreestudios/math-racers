@@ -72,6 +72,7 @@ export class ProgressManager {
       (typeof navigator !== 'undefined' ? navigator.userAgent : '')
     );
     this.data = this._load();
+    console.log(`[PM] constructor: instance created, bucks=${this.data.player.bucks}, useCookies=${this._useCookies}`);
   }
 
   // ─── Cookie helpers ──────────────────────────────────────────────────────
@@ -126,15 +127,27 @@ export class ProgressManager {
     let source = 'default';
     try {
       raw = this._cookieRead();
-      if (raw) source = 'cookies';
-    } catch { /* cookies unavailable */ }
+      if (raw) {
+        source = 'cookies';
+        console.log(`[PM] _load: found ${raw.length} bytes in cookies`);
+      }
+    } catch (e) {
+      console.warn('[PM] _load: cookieRead threw', e);
+    }
 
     // Fall back to localStorage
     if (!raw) {
       try {
         raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) source = 'localStorage';
-      } catch { /* unavailable */ }
+        if (raw) {
+          source = 'localStorage';
+          console.log(`[PM] _load: found ${raw.length} bytes in localStorage`);
+        } else {
+          console.log(`[PM] _load: localStorage key "${STORAGE_KEY}" returned null/empty`);
+        }
+      } catch (e) {
+        console.warn('[PM] _load: localStorage.getItem threw', e);
+      }
     }
 
     if (!raw) {
