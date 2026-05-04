@@ -10,7 +10,7 @@ export const PROBLEMS_PER_RACE = Infinity; // Keep generating until race ends
 export const ANSWER_COUNT = 4;
 
 // Car physics
-export const PLAYER_BASE_SPEED = 120;       // px/s at normal pace
+export const PLAYER_BASE_SPEED = 150;       // px/s at normal pace
 export const CORRECT_BOOST = 60;            // extra px/s for correct answer
 export const CORRECT_BOOST_DURATION = 400;  // ms
 export const WRONG_PENALTY = 50;            // px/s reduction
@@ -33,7 +33,7 @@ export const STREAK_BOOST = {
 };
 
 // Track / finish line
-export const FINISH_LINE_X = 6000;   // logical race distance in px
+export const FINISH_LINE_X = 3000;   // logical race distance in px
 export const TRACK_DISPLAY_SCALE = (GAME_WIDTH * 0.7) / FINISH_LINE_X; // world→screen
 
 // Bucks awards

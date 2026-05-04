@@ -48,6 +48,9 @@ export class RaceScene extends Phaser.Scene {
       ? (progress.avgAnswerTimeMsForClass(this.classId) || trackFallbackTime)
       : trackFallbackTime;
 
+    // Store player name now so _createUI() can use it without re-reading registry
+    this.playerName = progress?.data?.player?.name || 'You';
+
     this.aiRacers = [
       new AIRacer(0, playerAccuracy, playerAvgTime),
       new AIRacer(1, playerAccuracy, playerAvgTime),
@@ -611,9 +614,7 @@ export class RaceScene extends Phaser.Scene {
     this._progressBarWidth = barWidth;
 
     // Player name label — left of progress bar
-    const progress = this.registry.get('progress');
-    const playerName = progress?.data?.player?.name || 'You';
-    this.add.text(w / 2 - barWidth / 2 - 8, SAFE_PADDING + 6, playerName, {
+    this.add.text(w / 2 - barWidth / 2 - 8, SAFE_PADDING + 6, this.playerName, {
       fontSize: `${Math.min(13, w * 0.016)}px`,
       color: '#00ff88',
       fontFamily: 'Arial',
