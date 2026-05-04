@@ -536,4 +536,19 @@ export class ProgressManager {
     this.data = defaultSave();
     this._save();
   }
+
+  /** Unlock all classes and tracks without spending bucks (cheat/parent helper). */
+  unlockAll() {
+    for (const classId of Object.keys(CLASSES)) {
+      if (this.data.classState[classId]) {
+        this.data.classState[classId].unlocked = true;
+      }
+    }
+    for (const trackId of Object.keys(TRACKS)) {
+      if (this.data.trackState[trackId]) {
+        this.data.trackState[trackId].unlocked = true;
+      }
+    }
+    this._save();
+  }
 }

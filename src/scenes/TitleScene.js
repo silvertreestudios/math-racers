@@ -185,6 +185,12 @@ export class TitleScene extends Phaser.Scene {
     let resetTimer = null;
     const RESET_HOLD_MS = 5000;
 
+    // Cheat code: 10 rapid taps on build SHA → unlock all
+    let cheatTaps = 0;
+    let cheatResetTimer = null;
+    const CHEAT_TAPS_NEEDED = 10;
+    const CHEAT_WINDOW_MS   = 2000;
+
     buildLabel.on('pointerdown', () => {
       buildLabel.setColor('#ff4444').setAlpha(1);
       resetTimer = this.time.delayedCall(RESET_HOLD_MS, () => {
@@ -205,6 +211,36 @@ export class TitleScene extends Phaser.Scene {
         this.time.delayedCall(800, () => this.scene.restart());
         this.tweens.add({ targets: flash, alpha: 0, duration: 700, ease: 'Power2' });
       });
+    });
+
+    buildLabel.on('pointerup', () => {
+      // Only count as a cheat tap if the long-press timer is still pending
+      // (i.e., the press was short, not a held reset)
+      if (!resetTimer) return;
+
+      cheatTaps++;
+      // Restart the idle-reset window
+      if (cheatResetTimer) cheatResetTimer.remove();
+      cheatResetTimer = this.time.delayedCall(CHEAT_WINDOW_MS, () => {
+        cheatTaps = 0;
+        cheatResetTimer = null;
+      });
+
+      if (cheatTaps >= CHEAT_TAPS_NEEDED) {
+        cheatTaps = 0;
+        if (cheatResetTimer) { cheatResetTimer.remove(); cheatResetTimer = null; }
+        const prog = this.registry.get('progress');
+        if (prog) prog.unlockAll();
+        const unlockFlash = this.add.text(cx, cy, '🔓 ALL UNLOCKED!', {
+          fontSize: `${Math.min(42, w * 0.054)}px`,
+          fontStyle: 'bold',
+          color: '#ffd700',
+          fontFamily: 'Arial Black, Arial',
+          stroke: '#664400',
+          strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(100);
+        this.tweens.add({ targets: unlockFlash, alpha: 0, duration: 1500, ease: 'Power2' });
+      }
     });
 
     const cancelReset = () => {
