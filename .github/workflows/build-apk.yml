@@ -31,19 +31,25 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Rename APK with git SHA
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          cp android/app/build/outputs/apk/debug/app-debug.apk math-racers-${SHA}.apk
+          echo "APK_NAME=math-racers-${SHA}.apk" >> $GITHUB_ENV
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: math-racers-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.APK_NAME }}
 
       - name: Create/Update Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
           name: "Math Racers APK (Latest)"
-          body: "Auto-built Android APK. Download `math-racers-debug.apk` below.\n\nThis is a WebView wrapper that loads the live site — it auto-updates when new web code is deployed."
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          body: "Auto-built Android APK — build `${{ github.sha }}`.\n\nThis is a WebView wrapper that loads the live site — it auto-updates when new web code is deployed."
+          files: ${{ env.APK_NAME }}
           prerelease: true
           make_latest: false
         env:
