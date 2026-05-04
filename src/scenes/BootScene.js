@@ -16,14 +16,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Debug: check response headers for Clear-Site-Data or other storage-clearing headers
-    fetch(location.href, { method: 'HEAD' })
-      .then(r => {
-        console.log(`[Header] status=${r.status} url=${r.url}`);
-        r.headers.forEach((v, k) => console.log(`[Header] ${k}: ${v}`));
-      })
-      .catch(e => console.warn('[Header check failed]', e));
-
     this.scene.start('TitleScene');
   }
 }

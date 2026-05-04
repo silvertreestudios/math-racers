@@ -1,22 +1,21 @@
 /**
- * ProgressManager — handles persistence across LocalStorage, IndexedDB, and cookies.
+ * ProgressManager — handles persistence across cookies, LocalStorage, and IndexedDB.
  *
- * Storage strategy (all three written on every save):
- *  - LocalStorage: fast synchronous read on boot; primary source of truth.
- *  - IndexedDB: async fallback used when localStorage is empty on load
- *    (handles browsers/modes where localStorage is cleared between sessions).
- *  - Cookies (Silk/Amazon Kids only): dual-write for Kindle Fire Amazon Kids
- *    profiles where localStorage is cleared between sessions.
+ * All three backends are written on every save. Whichever survives a session
+ * reset will be used to recover data on next load.
  *
- * Boot sequence:
- *  1. Constructor runs _load() synchronously: localStorage → cookies → default.
- *  2. _initIDB() runs async: opens IDB, reads the saved record.
- *     If localStorage was empty but IDB has data, this.data is replaced with
- *     the IDB data and re-saved to localStorage for next time.
+ * Load priority (synchronous):
+ *   1. Cookies  — survive Silk/Amazon Kids session resets
+ *   2. localStorage — standard browser persistence
+ *   (async) IndexedDB — fallback if both above are empty on load
  *
- * Cookie chunking: cookies are limited to ~4096 bytes per cookie. The save
- * JSON is split into 3500-byte chunks and stored as mathRacersSave_0,
- * mathRacersSave_1, … A mathRacersSave_n cookie records the chunk count.
+ * Save (every _save() call):
+ *   - localStorage  (sync)
+ *   - cookies       (sync, chunked at 3500 bytes each)
+ *   - IndexedDB     (async)
+ *
+ * Cookie chunking: the save JSON is split into 3500-byte chunks stored as
+ * mathRacersSave_0, mathRacersSave_1, … with a count cookie mathRacersSave_n.
  */
 
 import { CLASSES, TRACKS } from '../config/tracks.js';
@@ -77,16 +76,10 @@ function defaultSave() {
 
 export class ProgressManager {
   constructor() {
-    // Detect Silk browser (Amazon Kindle Fire)
-    this._useCookies = /Silk|SilkBrowser/i.test(
-      (typeof navigator !== 'undefined' ? navigator.userAgent : '')
-    );
-    this._loadedFromSync = false; // set true if localStorage/cookies had data
+    this._loadedFromSync = false; // set true if cookies/localStorage had data
     this.data = this._load();
-    console.log(`[PM] constructor: instance created, bucks=${this.data.player.bucks}, useCookies=${this._useCookies}, syncLoaded=${this._loadedFromSync}`);
 
     // Async IDB init: if sync load found nothing, try IDB as fallback
-    this._idb = null; // will hold the open IDBDatabase once ready
     this._initIDB();
   }
 
@@ -128,45 +121,38 @@ export class ProgressManager {
   /**
    * Async IDB bootstrap: opens IDB and, if the sync load found no data,
    * recovers from IDB if it has a valid save. The recovered data is then
-   * re-saved to localStorage so subsequent loads are fast and synchronous.
+   * re-saved to all backends so subsequent loads are synchronous.
    *
    * After recovery, emits 'progressRestored' on the global game event bus
-   * (window.__phaserGame.events) so active scenes can refresh their UI.
+   * so active scenes can refresh their UI.
    */
   _initIDB() {
     this._idbRead()
       .then(idbData => {
-        if (!idbData) {
-          console.log('[PM] IDB: no saved data found in IndexedDB');
-          return;
+        if (!idbData || this._loadedFromSync) return;
+
+        // cookies and localStorage were both empty — recover from IDB
+        if (idbData.version !== SCHEMA_VERSION) {
+          const fresh = defaultSave();
+          if (idbData.player && typeof idbData.player.bucks === 'number') {
+            fresh.player.bucks = idbData.player.bucks;
+          }
+          this.data = fresh;
+        } else {
+          this._ensureKeys(idbData);
+          this.data = idbData;
         }
-        console.log(`[PM] IDB: found saved data, bucks=${idbData.player?.bucks ?? '?'}`);
 
-        if (!this._loadedFromSync) {
-          // localStorage/cookies were empty — recover from IDB
-          console.log('[PM] IDB: recovering from IndexedDB (localStorage was empty)');
-          if (idbData.version !== SCHEMA_VERSION) {
-            // migrate
-            const fresh = defaultSave();
-            if (idbData.player && typeof idbData.player.bucks === 'number') {
-              fresh.player.bucks = idbData.player.bucks;
-            }
-            this.data = fresh;
-          } else {
-            this._ensureKeys(idbData);
-            this.data = idbData;
-          }
-          // Re-save to localStorage so next load is synchronous
-          this._save();
+        // Re-save to all backends so next load is synchronous
+        this._save();
 
-          // Notify any active Phaser scene that data has been restored
-          const game = globalThis.__phaserGame;
-          if (game && game.events) {
-            game.events.emit('progressRestored', this.data);
-          }
+        // Notify any active Phaser scene that data has been restored
+        const game = globalThis.__phaserGame;
+        if (game && game.events) {
+          game.events.emit('progressRestored', this.data);
         }
       })
-      .catch(e => console.warn('[PM] IDB: _initIDB failed', e));
+      .catch(() => { /* IDB unavailable — silent */ });
   }
 
   // ─── Cookie helpers ──────────────────────────────────────────────────────
@@ -216,38 +202,24 @@ export class ProgressManager {
   // ─── Load / Save ─────────────────────────────────────────────────────────
 
   _load() {
-    // Try cookies first — they survive Amazon Kids session resets on Silk
     let raw = null;
     let source = 'default';
+
+    // 1. Try cookies first
     try {
       raw = this._cookieRead();
-      if (raw) {
-        source = 'cookies';
-        console.log(`[PM] _load: found ${raw.length} bytes in cookies`);
-      }
-    } catch (e) {
-      console.warn('[PM] _load: cookieRead threw', e);
-    }
+      if (raw) source = 'cookies';
+    } catch { /* cookies unavailable */ }
 
-    // Fall back to localStorage
+    // 2. Fall back to localStorage
     if (!raw) {
       try {
         raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          source = 'localStorage';
-          console.log(`[PM] _load: found ${raw.length} bytes in localStorage, origin=${location.origin}`);
-        } else {
-          console.log(`[PM] _load: localStorage key "${STORAGE_KEY}" returned null/empty, origin=${location.origin}, keys=[${Object.keys(localStorage).join(',')}]`);
-        }
-      } catch (e) {
-        console.warn('[PM] _load: localStorage.getItem threw', e);
-      }
+        if (raw) source = 'localStorage';
+      } catch { /* unavailable */ }
     }
 
-    if (!raw) {
-      console.log('[PM] _load: no saved data found, using default (bucks=0)');
-      return defaultSave();
-    }
+    if (!raw) return defaultSave();
 
     this._loadedFromSync = true;
 
@@ -256,55 +228,30 @@ export class ProgressManager {
       // Migrate from schema v1 or any older version
       if (parsed.version !== SCHEMA_VERSION) {
         const fresh = defaultSave();
-        // Preserve bucks from old save if present
         if (parsed.player && typeof parsed.player.bucks === 'number') {
           fresh.player.bucks = parsed.player.bucks;
         }
-        console.log(`[PM] _load: migrated old schema from ${source}, bucks=${fresh.player.bucks}`);
         return fresh;
       }
       // Ensure all tracks/classes exist (handles new tracks added after save)
       this._ensureKeys(parsed);
-      console.log(`[PM] _load: loaded from ${source}, bucks=${parsed.player.bucks}`);
       return parsed;
     } catch {
-      console.log(`[PM] _load: JSON parse failed from ${source}, using default`);
       return defaultSave();
     }
   }
 
   _save() {
     const json = JSON.stringify(this.data);
-    const bucks = this.data.player.bucks;
 
-    // Always write to localStorage
-    try {
-      localStorage.setItem(STORAGE_KEY, json);
-      // Immediate read-back to verify the round-trip
-      const verify = localStorage.getItem(STORAGE_KEY);
-      if (verify === json) {
-        console.log(`[PM] _save: localStorage write+verify OK, bucks=${bucks}, key="${STORAGE_KEY}", origin=${location.origin}`);
-      } else {
-        console.warn(`[PM] _save: localStorage VERIFY MISMATCH — wrote ${json.length} bytes but read back ${verify ? verify.length : 'null'} bytes`);
-      }
-    } catch (e) {
-      console.warn(`[PM] _save: localStorage write FAILED, bucks=${bucks}`, e);
-    }
+    // 1. localStorage (sync)
+    try { localStorage.setItem(STORAGE_KEY, json); } catch { /* quota/unavailable */ }
 
-    // Async write to IndexedDB (belt-and-suspenders — survives localStorage clears)
-    this._idbWrite(this.data)
-      .then(() => console.log(`[PM] _save: IDB write OK, bucks=${bucks}`))
-      .catch(e => console.warn('[PM] _save: IDB write failed', e));
+    // 2. Cookies (sync) — always, not just on Silk
+    try { this._cookieWrite(json); } catch { /* unavailable */ }
 
-    // Dual-write to cookies on Silk for persistence across Amazon Kids sessions
-    if (this._useCookies) {
-      try {
-        this._cookieWrite(json);
-        console.log(`[PM] _save: cookie write OK, bucks=${bucks}`);
-      } catch (e) {
-        console.warn(`[PM] _save: cookie write FAILED, bucks=${bucks}`, e);
-      }
-    }
+    // 3. IndexedDB (async)
+    this._idbWrite(this.data).catch(() => { /* unavailable */ });
   }
 
   _ensureKeys(data) {

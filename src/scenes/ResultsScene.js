@@ -50,15 +50,11 @@ export class ResultsScene extends Phaser.Scene {
     const progress = this.registry.get('progress');
     let nextTrackId = null;
     if (progress) {
-      console.log(`[Results] before recordRace: bucks=${progress.bucks}`);
       nextTrackId = progress.recordRace({
         position, correct, answered, streak, bucksEarned, totalAnswerTimeMs,
         trackId: trackId || null,
         classId: classId || null,
       });
-      console.log(`[Results] after recordRace: bucks=${progress.bucks}, bucksEarned=${bucksEarned}, nextTrack=${nextTrackId}`);
-    } else {
-      console.warn('[Results] progress registry not found — bucks will not be saved');
     }
 
     // ── Background ────────────────────────────────────────────────────────
