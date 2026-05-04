@@ -9,6 +9,7 @@ const additionAttachments = [
   {
     id: 'racing-stripe',
     name: 'Racing Stripe',
+    emoji: '🏁',
     classId: 'addition',
     cost: 500,
     draw(g, c) {
@@ -19,6 +20,7 @@ const additionAttachments = [
   {
     id: 'flame-decal',
     name: 'Flame Decal',
+    emoji: '🔥',
     classId: 'addition',
     cost: 800,
     draw(g, c) {
@@ -33,6 +35,7 @@ const additionAttachments = [
   {
     id: 'rear-spoiler',
     name: 'Rear Spoiler',
+    emoji: '🏎️',
     classId: 'addition',
     cost: 1000,
     draw(g, c) {
@@ -45,6 +48,7 @@ const additionAttachments = [
   {
     id: 'rocket-exhaust',
     name: 'Rocket Exhaust',
+    emoji: '🚀',
     classId: 'addition',
     cost: 1500,
     draw(g, c) {
@@ -57,6 +61,7 @@ const additionAttachments = [
   {
     id: 'crown',
     name: 'Crown',
+    emoji: '👑',
     classId: 'addition',
     cost: 2000,
     draw(g, c) {
@@ -77,6 +82,7 @@ const additionAttachments = [
   {
     id: 'star-antenna',
     name: 'Star Antenna',
+    emoji: '⭐',
     classId: 'addition',
     cost: 500,
     draw(g, c) {
@@ -92,6 +98,7 @@ const additionAttachments = [
   {
     id: 'googly-eyes',
     name: 'Googly Eyes',
+    emoji: '👀',
     classId: 'addition',
     cost: 800,
     draw(g, c) {
@@ -106,6 +113,7 @@ const additionAttachments = [
   {
     id: 'rainbow-trail',
     name: 'Rainbow Trail',
+    emoji: '🌈',
     classId: 'addition',
     cost: 2500,
     draw(g, c) {
@@ -119,6 +127,7 @@ const additionAttachments = [
   {
     id: 'turbo-fan',
     name: 'Turbo Fan',
+    emoji: '💨',
     classId: 'addition',
     cost: 1500,
     draw(g, c) {
@@ -133,6 +142,7 @@ const additionAttachments = [
   {
     id: 'rubber-ducky',
     name: 'Rubber Ducky',
+    emoji: '🦆',
     classId: 'addition',
     cost: 3000,
     draw(g, c) {
@@ -154,6 +164,7 @@ const subtractionAttachments = [
   {
     id: 'mud-flaps-big',
     name: 'Big Mud Flaps',
+    emoji: '💦',
     classId: 'subtraction',
     cost: 1000,
     draw(g, c) {
@@ -165,6 +176,7 @@ const subtractionAttachments = [
   {
     id: 'roof-rack',
     name: 'Roof Rack',
+    emoji: '📦',
     classId: 'subtraction',
     cost: 1500,
     draw(g, c) {
@@ -179,6 +191,7 @@ const subtractionAttachments = [
   {
     id: 'bull-bar',
     name: 'Bull Bar',
+    emoji: '🐂',
     classId: 'subtraction',
     cost: 2000,
     draw(g, c) {
@@ -190,6 +203,7 @@ const subtractionAttachments = [
   {
     id: 'rally-lights',
     name: 'Rally Lights',
+    emoji: '💡',
     classId: 'subtraction',
     cost: 2500,
     draw(g, c) {
@@ -206,6 +220,7 @@ const subtractionAttachments = [
   {
     id: 'racing-numbers',
     name: 'Racing Numbers',
+    emoji: '#️⃣',
     classId: 'subtraction',
     cost: 1000,
     draw(g, c) {
@@ -220,6 +235,7 @@ const subtractionAttachments = [
   {
     id: 'antenna-flag',
     name: 'Antenna Flag',
+    emoji: '🚩',
     classId: 'subtraction',
     cost: 1500,
     draw(g, c) {
@@ -232,6 +248,7 @@ const subtractionAttachments = [
   {
     id: 'snorkel',
     name: 'Snorkel',
+    emoji: '🤿',
     classId: 'subtraction',
     cost: 3000,
     draw(g, c) {
@@ -246,6 +263,7 @@ const subtractionAttachments = [
   {
     id: 'spare-tire',
     name: 'Spare Tire',
+    emoji: '🛞',
     classId: 'subtraction',
     cost: 2000,
     draw(g, c) {
@@ -258,6 +276,7 @@ const subtractionAttachments = [
   {
     id: 'camo-paint',
     name: 'Camo Paint',
+    emoji: '🪖',
     classId: 'subtraction',
     cost: 4000,
     draw(g, c) {
@@ -273,6 +292,7 @@ const subtractionAttachments = [
   {
     id: 'cat-ears',
     name: 'Cat Ears',
+    emoji: '🐱',
     classId: 'subtraction',
     cost: 5000,
     draw(g, c) {
@@ -292,6 +312,7 @@ const multiplicationAttachments = [
   {
     id: 'smoke-stacks',
     name: 'Smoke Stacks',
+    emoji: '💨',
     classId: 'multiplication',
     cost: 2000,
     draw(g, c) {
@@ -310,6 +331,7 @@ const multiplicationAttachments = [
   {
     id: 'skull-hood',
     name: 'Skull Hood',
+    emoji: '💀',
     classId: 'multiplication',
     cost: 3000,
     draw(g, c) {
@@ -328,6 +350,7 @@ const multiplicationAttachments = [
   {
     id: 'chain-wheels',
     name: 'Chain Wheels',
+    emoji: '⛓️',
     classId: 'multiplication',
     cost: 4000,
     draw(g, c) {
@@ -342,6 +365,7 @@ const multiplicationAttachments = [
   {
     id: 'lightning-bolts-decal',
     name: 'Lightning Bolts',
+    emoji: '⚡',
     classId: 'multiplication',
     cost: 2500,
     draw(g, c) {
@@ -355,6 +379,7 @@ const multiplicationAttachments = [
   {
     id: 'fire-wheels',
     name: 'Fire Wheels',
+    emoji: '🔥',
     classId: 'multiplication',
     cost: 5000,
     draw(g, c) {
@@ -369,6 +394,7 @@ const multiplicationAttachments = [
   {
     id: 'viking-horns',
     name: 'Viking Horns',
+    emoji: '🐃',
     classId: 'multiplication',
     cost: 6000,
     draw(g, c) {
@@ -385,6 +411,7 @@ const multiplicationAttachments = [
   {
     id: 'spiked-bumper',
     name: 'Spiked Bumper',
+    emoji: '🦔',
     classId: 'multiplication',
     cost: 3500,
     draw(g, c) {
@@ -399,6 +426,7 @@ const multiplicationAttachments = [
   {
     id: 'monster-eyes',
     name: 'Monster Eyes',
+    emoji: '👹',
     classId: 'multiplication',
     cost: 2000,
     draw(g, c) {
@@ -413,6 +441,7 @@ const multiplicationAttachments = [
   {
     id: 'mohawk',
     name: 'Mohawk',
+    emoji: '🦖',
     classId: 'multiplication',
     cost: 4500,
     draw(g, c) {
@@ -426,6 +455,7 @@ const multiplicationAttachments = [
   {
     id: 'bat-wings',
     name: 'Bat Wings',
+    emoji: '🦇',
     classId: 'multiplication',
     cost: 8000,
     draw(g, c) {
@@ -446,6 +476,7 @@ const divisionAttachments = [
   {
     id: 'shark-fin',
     name: 'Shark Fin',
+    emoji: '🦈',
     classId: 'division',
     cost: 3000,
     draw(g, c) {
@@ -456,6 +487,7 @@ const divisionAttachments = [
   {
     id: 'halo-ring',
     name: 'Halo Ring',
+    emoji: '💫',
     classId: 'division',
     cost: 4000,
     draw(g, c) {
@@ -466,6 +498,7 @@ const divisionAttachments = [
   {
     id: 'sponsor-stickers',
     name: 'Sponsor Stickers',
+    emoji: '🏷️',
     classId: 'division',
     cost: 3000,
     draw(g, c) {
@@ -480,6 +513,7 @@ const divisionAttachments = [
   {
     id: 'drs-wing',
     name: 'DRS Wing',
+    emoji: '🪽',
     classId: 'division',
     cost: 5000,
     draw(g, c) {
@@ -494,6 +528,7 @@ const divisionAttachments = [
   {
     id: 'led-strip',
     name: 'LED Strip',
+    emoji: '💎',
     classId: 'division',
     cost: 6000,
     draw(g, c) {
@@ -504,6 +539,7 @@ const divisionAttachments = [
   {
     id: 'gold-rims',
     name: 'Gold Rims',
+    emoji: '✨',
     classId: 'division',
     cost: 7000,
     draw(g, c) {
@@ -518,6 +554,7 @@ const divisionAttachments = [
   {
     id: 'jet-engine',
     name: 'Jet Engine',
+    emoji: '🔧',
     classId: 'division',
     cost: 8000,
     draw(g, c) {
@@ -530,6 +567,7 @@ const divisionAttachments = [
   {
     id: 'laser-antenna',
     name: 'Laser Antenna',
+    emoji: '📡',
     classId: 'division',
     cost: 4000,
     draw(g, c) {
@@ -542,6 +580,7 @@ const divisionAttachments = [
   {
     id: 'aero-canards',
     name: 'Aero Canards',
+    emoji: '🪶',
     classId: 'division',
     cost: 5000,
     draw(g, c) {
@@ -557,6 +596,7 @@ const divisionAttachments = [
   {
     id: 'top-hat',
     name: 'Top Hat',
+    emoji: '🎩',
     classId: 'division',
     cost: 10000,
     draw(g, c) {
@@ -575,6 +615,7 @@ const advancedAttachments = [
   {
     id: 'carbon-fiber',
     name: 'Carbon Fiber',
+    emoji: '⬛',
     classId: 'advanced',
     cost: 4000,
     draw(g, c) {
@@ -590,6 +631,7 @@ const advancedAttachments = [
   {
     id: 'neon-underglow',
     name: 'Neon Underglow',
+    emoji: '💜',
     classId: 'advanced',
     cost: 5000,
     draw(g, c) {
@@ -600,6 +642,7 @@ const advancedAttachments = [
   {
     id: 'extra-diffuser',
     name: 'Extra Diffuser',
+    emoji: '🌀',
     classId: 'advanced',
     cost: 4000,
     draw(g, c) {
@@ -612,6 +655,7 @@ const advancedAttachments = [
   {
     id: 'side-scoops',
     name: 'Side Scoops',
+    emoji: '🕳️',
     classId: 'advanced',
     cost: 5000,
     draw(g, c) {
@@ -623,6 +667,7 @@ const advancedAttachments = [
   {
     id: 'digital-camo',
     name: 'Digital Camo',
+    emoji: '🟩',
     classId: 'advanced',
     cost: 7000,
     draw(g, c) {
@@ -641,6 +686,7 @@ const advancedAttachments = [
   {
     id: 'diamond-grille',
     name: 'Diamond Grille',
+    emoji: '💠',
     classId: 'advanced',
     cost: 8000,
     draw(g, c) {
@@ -658,6 +704,7 @@ const advancedAttachments = [
   {
     id: 'scissor-doors',
     name: 'Scissor Doors',
+    emoji: '🚪',
     classId: 'advanced',
     cost: 10000,
     draw(g, c) {
@@ -669,6 +716,7 @@ const advancedAttachments = [
   {
     id: 'flame-thrower',
     name: 'Flame Thrower',
+    emoji: '🔥',
     classId: 'advanced',
     cost: 12000,
     draw(g, c) {
@@ -683,6 +731,7 @@ const advancedAttachments = [
   {
     id: 'angel-wings',
     name: 'Angel Wings',
+    emoji: '😇',
     classId: 'advanced',
     cost: 12000,
     draw(g, c) {
@@ -704,6 +753,7 @@ const advancedAttachments = [
   {
     id: 'party-hat',
     name: 'Party Hat',
+    emoji: '🎉',
     classId: 'advanced',
     cost: 15000,
     draw(g, c) {
