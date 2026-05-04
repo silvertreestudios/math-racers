@@ -25,7 +25,7 @@ const COOKIE_BASE  = 'mathRacersSave';
 const COOKIE_COUNT = 'mathRacersSave_n';
 const COOKIE_CHUNK = 3500;
 const COOKIE_TTL   = 60 * 60 * 24 * 365; // 1 year in seconds
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const IDB_NAME     = 'mathRacersDB';
 const IDB_STORE    = 'saves';
 const IDB_KEY      = 'main';
@@ -52,6 +52,7 @@ function defaultSave() {
 
   return {
     version: SCHEMA_VERSION,
+    firstRun: true,
     player: {
       name: 'Player 1',
       bucks: 0,
@@ -225,12 +226,22 @@ export class ProgressManager {
 
     try {
       const parsed = JSON.parse(raw);
-      // Migrate from schema v1 or any older version
+      // Migrate from older schema versions
       if (parsed.version !== SCHEMA_VERSION) {
+        if (parsed.version === 2) {
+          // v2 → v3: add firstRun flag. Existing players skip name entry.
+          parsed.version = SCHEMA_VERSION;
+          parsed.firstRun = false;
+          this._ensureKeys(parsed);
+          return parsed;
+        }
+        // Older than v2: preserve bucks only
         const fresh = defaultSave();
         if (parsed.player && typeof parsed.player.bucks === 'number') {
           fresh.player.bucks = parsed.player.bucks;
         }
+        // Existing player — skip name entry
+        fresh.firstRun = false;
         return fresh;
       }
       // Ensure all tracks/classes exist (handles new tracks added after save)
@@ -285,6 +296,21 @@ export class ProgressManager {
 
   get stats() {
     return this.data.stats;
+  }
+
+  get isFirstRun() {
+    return this.data.firstRun !== false;
+  }
+
+  /**
+   * Save the player's chosen name and mark first-run complete.
+   * @param {string} name  Raw input; trimmed, capped at 16 chars, defaults to 'Racer'
+   */
+  setPlayerName(name) {
+    const trimmed = (name || '').trim().slice(0, 16) || 'Racer';
+    this.data.player.name = trimmed;
+    this.data.firstRun = false;
+    this._save();
   }
 
   // ─── Class unlock ────────────────────────────────────────────────────────

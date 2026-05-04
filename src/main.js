@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene.js';
+import { NameEntryScene } from './scenes/NameEntryScene.js';
 import { TitleScene } from './scenes/TitleScene.js';
 import { ClassSelectScene } from './scenes/ClassSelectScene.js';
 import { TrackSelectScene } from './scenes/TrackSelectScene.js';
@@ -20,7 +21,7 @@ const config = {
     width: '100%',
     height: '100%',
   },
-  scene: [BootScene, TitleScene, ClassSelectScene, TrackSelectScene, RaceScene, ResultsScene],
+  scene: [BootScene, NameEntryScene, TitleScene, ClassSelectScene, TrackSelectScene, RaceScene, ResultsScene],
   callbacks: {
     preBoot: (game) => {
       game.registry.set('progress', progress);

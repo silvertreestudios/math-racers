@@ -16,6 +16,11 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.start('TitleScene');
+    const progress = this.registry.get('progress');
+    if (progress && progress.isFirstRun) {
+      this.scene.start('NameEntryScene');
+    } else {
+      this.scene.start('TitleScene');
+    }
   }
 }
