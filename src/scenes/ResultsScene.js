@@ -27,10 +27,24 @@ export class ResultsScene extends Phaser.Scene {
     const { position, correct, answered, streak, totalAnswerTimeMs, classId, trackId } = this.raceData;
     const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
 
-    // ── Calculate bucks ───────────────────────────────────────────────────
-    let bucksEarned = BUCKS_BY_POSITION[position - 1] || 5;
-    if (accuracy === 100) bucksEarned += BUCKS_ACCURACY_BONUS;
-    if (streak >= 5) bucksEarned += BUCKS_STREAK_BONUS;
+    // ── Calculate bucks (scaled by class multiplier + track index) ────────
+    const cls = CLASSES[classId] || CLASSES['addition'];
+    const track = TRACKS[trackId] || null;
+    const multiplier = cls.bucksMultiplier || 1;
+    const trackIndex = track ? (track.trackIndex || 0) : 0;
+
+    // Base payout for this position, scaled by class multiplier
+    const basePosition = BUCKS_BY_POSITION[position - 1] || 5;
+    const scaledPosition = Math.round(basePosition * multiplier);
+    // Per-track escalation: +10% of the scaled 1st-place value per track index
+    const trackBonus = Math.round(Math.round(BUCKS_BY_POSITION[0] * multiplier) * 0.1 * trackIndex);
+    const positionPayout = scaledPosition + trackBonus;
+
+    // Bonuses also scale with class multiplier
+    const accuracyBonus = accuracy === 100 ? Math.round(BUCKS_ACCURACY_BONUS * multiplier) : 0;
+    const streakBonus   = streak >= 5      ? Math.round(BUCKS_STREAK_BONUS * multiplier)   : 0;
+
+    const bucksEarned = positionPayout + accuracyBonus + streakBonus;
 
     // Save progress and get next track if unlocked
     const progress = this.registry.get('progress');
@@ -48,8 +62,7 @@ export class ResultsScene extends Phaser.Scene {
     gfx.fillGradientStyle(0x1a1a3e, 0x1a1a3e, 0x2a2a5e, 0x2a2a5e, 1);
     gfx.fillRect(0, 0, w, h);
 
-    // Class color accent
-    const cls = CLASSES[classId] || CLASSES['addition'];
+    // Class color accent (cls already set above)
     gfx.fillStyle(cls.color, 0.12);
     gfx.fillRect(0, 0, w, 5);
 
@@ -94,9 +107,9 @@ export class ResultsScene extends Phaser.Scene {
 
     // ── Bucks breakdown ───────────────────────────────────────────────────
     const bucksStyle = { fontSize: `${Math.min(18, w * 0.023)}px`, color: '#aaccff', fontFamily: 'Arial' };
-    const breakdownLines = [`Race finish: 💵 ${BUCKS_BY_POSITION[position - 1] || 5}`];
-    if (accuracy === 100) breakdownLines.push(`Perfect accuracy: 💵 +${BUCKS_ACCURACY_BONUS}`);
-    if (streak >= 5) breakdownLines.push(`Streak bonus: 💵 +${BUCKS_STREAK_BONUS}`);
+    const breakdownLines = [`Race finish: 💵 ${positionPayout}`];
+    if (accuracyBonus > 0) breakdownLines.push(`Perfect accuracy: 💵 +${accuracyBonus}`);
+    if (streakBonus > 0)   breakdownLines.push(`Streak bonus: 💵 +${streakBonus}`);
 
     for (const line of breakdownLines) {
       this.add.text(cx, y, line, bucksStyle).setOrigin(0.5);
