@@ -26,9 +26,10 @@ export class MathEngine {
    * Bails out after 10 attempts; if still colliding, only guarantees no
    * back-to-back repeat (prevents the worst case on tiny number ranges).
    * @param {object} trackConfig  Full track object from tracks.js
+   * @param {'easy'|'medium'|'full'} [tier='full']  Difficulty tier from DifficultyManager
    * @returns {{ a, b, correct, answers, answerIndex, operator }}
    */
-  generateProblem(trackConfig) {
+  generateProblem(trackConfig, tier = 'full') {
     const op = trackConfig.classId || 'addition';
     const MAX_TRIES = 10;
 
@@ -36,7 +37,7 @@ export class MathEngine {
     let lastKey = this._recentKeys[this._recentKeys.length - 1] ?? null;
 
     for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
-      problem = this._generate(op, trackConfig);
+      problem = this._generate(op, trackConfig, tier);
       const key = `${problem.operator}${problem.a}${problem.operator}${problem.b}`;
 
       // Accept if not in recent history (full dedup window)
@@ -65,31 +66,103 @@ export class MathEngine {
     }
   }
 
-  _generate(op, trackConfig) {
+  _generate(op, trackConfig, tier = 'full') {
     switch (op) {
-      case 'subtraction':    return this._subtraction(trackConfig);
-      case 'multiplication': return this._multiplication(trackConfig);
-      case 'division':       return this._division(trackConfig);
-      default:               return this._addition(trackConfig);
+      case 'subtraction':    return this._subtraction(trackConfig, tier);
+      case 'multiplication': return this._multiplication(trackConfig, tier);
+      case 'division':       return this._division(trackConfig, tier);
+      default:               return this._addition(trackConfig, tier);
     }
   }
 
   // ─── Operations ──────────────────────────────────────────────────────────
 
-  _addition(track) {
-    const a = this._rand(track.operandA.min, track.operandA.max);
-    const b = this._rand(track.operandB.min, track.operandB.max);
+  _addition(track, tier = 'full') {
+    let a, b;
+    if (tier === 'easy') {
+      // No carrying: pick digits so each column sums ≤ 9
+      // Strategy: keep both operands small and carry-free
+      const aMax = Math.min(track.operandA.max, 49);
+      const bMax = Math.min(track.operandB.max, 49);
+      do {
+        a = this._rand(track.operandA.min, aMax);
+        b = this._rand(track.operandB.min, bMax);
+      } while (!this._additionNoCarry(a, b));
+    } else if (tier === 'medium') {
+      // At most one carry — allow any values but avoid multi-carry
+      const aMax = Math.min(track.operandA.max, 99);
+      const bMax = Math.min(track.operandB.max, 99);
+      let tries = 0;
+      do {
+        a = this._rand(track.operandA.min, aMax);
+        b = this._rand(track.operandB.min, bMax);
+        tries++;
+      } while (this._additionCarryCount(a, b) > 1 && tries < 20);
+    } else {
+      a = this._rand(track.operandA.min, track.operandA.max);
+      b = this._rand(track.operandB.min, track.operandB.max);
+    }
     const correct = a + b;
     const distractors = this._additionDistractors(a, b, correct);
     const answers = this._buildAnswerList(correct, distractors);
     return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '+' };
   }
 
-  _subtraction(track) {
+  /** True when adding a + b requires no carrying at any digit position */
+  _additionNoCarry(a, b) {
+    let carry = 0;
+    let x = a, y = b;
+    while (x > 0 || y > 0) {
+      const col = (x % 10) + (y % 10) + carry;
+      if (col > 9) return false;
+      carry = Math.floor(col / 10);
+      x = Math.floor(x / 10);
+      y = Math.floor(y / 10);
+    }
+    return true;
+  }
+
+  /** Count carry operations when adding a + b */
+  _additionCarryCount(a, b) {
+    let carry = 0, count = 0;
+    let x = a, y = b;
+    while (x > 0 || y > 0) {
+      const col = (x % 10) + (y % 10) + carry;
+      carry = Math.floor(col / 10);
+      if (carry) count++;
+      x = Math.floor(x / 10);
+      y = Math.floor(y / 10);
+    }
+    return count;
+  }
+
+  _subtraction(track, tier = 'full') {
+    let a, b;
+    if (tier === 'easy') {
+      // No borrowing: each digit of b <= corresponding digit of a
+      const aMax = Math.min(track.operandA.max, 99);
+      const bMax = Math.min(track.operandB.max, 99);
+      let tries = 0;
+      do {
+        a = this._rand(track.operandA.min, aMax);
+        b = this._rand(track.operandB.min, Math.min(bMax, a));
+        tries++;
+      } while (!this._subtractionNoBorrow(a, b) && tries < 20);
+    } else if (tier === 'medium') {
+      // At most one borrow
+      const aMax = Math.min(track.operandA.max, 99);
+      const bMax = Math.min(track.operandB.max, 99);
+      let tries = 0;
+      do {
+        a = this._rand(track.operandA.min, aMax);
+        b = this._rand(track.operandB.min, Math.min(bMax, a));
+        tries++;
+      } while (this._subtractionBorrowCount(a, b) > 1 && tries < 20);
+    } else {
+      a = this._rand(track.operandA.min, track.operandA.max);
+      b = this._rand(track.operandB.min, track.operandB.max);
+    }
     // Ensure a >= b so answer is positive
-    let a = this._rand(track.operandA.min, track.operandA.max);
-    let b = this._rand(track.operandB.min, track.operandB.max);
-    // Clamp b to be <= a
     b = Math.min(b, a - 1 > 0 ? a - 1 : a);
     if (b <= 0) b = 1;
     if (a <= b) a = b + this._rand(1, 5);
@@ -99,19 +172,78 @@ export class MathEngine {
     return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '−' };
   }
 
-  _multiplication(track) {
-    const a = this._rand(track.operandA.min, track.operandA.max);
-    const b = this._rand(track.operandB.min, track.operandB.max);
+  /** True when a - b requires no borrowing */
+  _subtractionNoBorrow(a, b) {
+    let x = a, y = b;
+    while (x > 0 || y > 0) {
+      if ((x % 10) < (y % 10)) return false;
+      x = Math.floor(x / 10);
+      y = Math.floor(y / 10);
+    }
+    return true;
+  }
+
+  /** Count borrow operations needed for a - b */
+  _subtractionBorrowCount(a, b) {
+    let borrow = 0, count = 0;
+    let x = a, y = b;
+    while (x > 0 || y > 0) {
+      let col = (x % 10) - (y % 10) - borrow;
+      if (col < 0) { borrow = 1; count++; } else { borrow = 0; }
+      x = Math.floor(x / 10);
+      y = Math.floor(y / 10);
+    }
+    return count;
+  }
+
+  _multiplication(track, tier = 'full') {
+    let a, b;
+    if (tier === 'easy') {
+      // One operand is a single digit or multiple of 10
+      if (Math.random() < 0.5) {
+        a = this._rand(Math.max(track.operandA.min, 2), Math.min(track.operandA.max, 9));
+        b = this._rand(track.operandB.min, track.operandB.max);
+      } else {
+        a = this._rand(track.operandA.min, track.operandA.max);
+        // multiple of 10 within range, or single digit
+        const maxB = Math.min(track.operandB.max, 9);
+        b = this._rand(Math.max(track.operandB.min, 2), Math.max(maxB, track.operandB.min));
+      }
+    } else if (tier === 'medium') {
+      // Lower half of each range
+      const aMid = Math.floor((track.operandA.min + track.operandA.max) / 2);
+      const bMid = Math.floor((track.operandB.min + track.operandB.max) / 2);
+      a = this._rand(track.operandA.min, aMid);
+      b = this._rand(track.operandB.min, bMid);
+    } else {
+      a = this._rand(track.operandA.min, track.operandA.max);
+      b = this._rand(track.operandB.min, track.operandB.max);
+    }
     const correct = a * b;
     const distractors = this._multiplicationDistractors(a, b, correct);
     const answers = this._buildAnswerList(correct, distractors);
     return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '×' };
   }
 
-  _division(track) {
+  _division(track, tier = 'full') {
     // Build clean division: dividend = divisor × quotient (no remainder)
-    const divisor = this._rand(track.divisorRange.min, track.divisorRange.max);
-    const quotient = this._rand(track.quotientRange.min, track.quotientRange.max);
+    let divisor, quotient;
+    if (tier === 'easy') {
+      // Small divisor (2-5) clamped to track range, single-digit quotient
+      const divMax = Math.min(track.divisorRange.max, 5);
+      divisor  = this._rand(track.divisorRange.min, Math.max(divMax, track.divisorRange.min));
+      const qMax = Math.min(track.quotientRange.max, 9);
+      quotient = this._rand(track.quotientRange.min, Math.max(qMax, track.quotientRange.min));
+    } else if (tier === 'medium') {
+      // Lower half of each range
+      const divMid = Math.floor((track.divisorRange.min + track.divisorRange.max) / 2);
+      const qMid   = Math.floor((track.quotientRange.min + track.quotientRange.max) / 2);
+      divisor  = this._rand(track.divisorRange.min, divMid);
+      quotient = this._rand(track.quotientRange.min, qMid);
+    } else {
+      divisor  = this._rand(track.divisorRange.min, track.divisorRange.max);
+      quotient = this._rand(track.quotientRange.min, track.quotientRange.max);
+    }
     const dividend = divisor * quotient;
     const correct = quotient;
     const distractors = this._divisionDistractors(dividend, divisor, correct);

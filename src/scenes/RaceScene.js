@@ -5,6 +5,7 @@
 import Phaser from 'phaser';
 import { MathEngine } from '../systems/MathEngine.js';
 import { AIRacer } from '../systems/AIRacer.js';
+import { DifficultyManager } from '../systems/DifficultyManager.js';
 import { CLASSES, TRACKS } from '../config/tracks.js';
 import { AI_NAMES_BY_CLASS, CAR_COLORS_BY_CLASS } from '../config/cars.js';
 import {
@@ -36,6 +37,8 @@ export class RaceScene extends Phaser.Scene {
 
     this.mathEngine = new MathEngine();
     this.mathEngine.reset(); // clear repeat-prevention history for this race
+    this.difficultyManager = new DifficultyManager();
+    this.difficultyManager.reset();
 
     // Get per-class stats for AI calibration — falls back to track-specific
     // defaults on first race in a new class so the player isn't overwhelmed.
@@ -708,7 +711,8 @@ export class RaceScene extends Phaser.Scene {
       return;
     }
 
-    const problem = this.mathEngine.generateProblem(this.trackConfig);
+    const tier = this.difficultyManager.getNextTier();
+    const problem = this.mathEngine.generateProblem(this.trackConfig, tier);
     this.currentProblem = problem;
     this.problemText.setText(`${problem.a} ${problem.operator} ${problem.b} = ?`);
 
@@ -734,7 +738,12 @@ export class RaceScene extends Phaser.Scene {
     const correct = chosen === problem.correct;
 
     this.problemsAnswered++;
-    this.totalAnswerTimeMs += performance.now() - this.problemShownAt;
+    const answerTimeMs = performance.now() - this.problemShownAt;
+    this.totalAnswerTimeMs += answerTimeMs;
+    const avgTimeMs = this.problemsAnswered > 1
+      ? this.totalAnswerTimeMs / this.problemsAnswered
+      : 0;
+    this.difficultyManager.recordAnswer(correct, answerTimeMs, avgTimeMs);
 
     if (correct) {
       this._onCorrect(idx);
