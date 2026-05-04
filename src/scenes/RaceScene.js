@@ -234,34 +234,293 @@ export class RaceScene extends Phaser.Scene {
     const aiNames = AI_NAMES_BY_CLASS[this.classId] || ['Speedy Sam', 'Turbo Tina', 'Dash Dave'];
     const carNames = ['YOU', ...aiNames];
 
+    // Pick car-draw function based on class
+    const drawFn = {
+      addition:       (g, c, isPlayer) => this._drawGoKart(g, c, isPlayer),
+      subtraction:    (g, c, isPlayer) => this._drawRallyCar(g, c, isPlayer),
+      multiplication: (g, c, isPlayer) => this._drawMonsterTruck(g, c, isPlayer),
+      division:       (g, c, isPlayer) => this._drawFormulaOne(g, c, isPlayer),
+    }[this.classId] || ((g, c, isPlayer) => this._drawGoKart(g, c, isPlayer));
+
     for (let i = 0; i < 4; i++) {
-      const gfx = this.add.graphics().setDepth(i === 0 ? 5 : 3);
+      const isPlayer = i === 0;
+      const gfx = this.add.graphics().setDepth(isPlayer ? 5 : 3);
       const color = carColors[i];
       const y = lanes[i];
 
-      // Car body
-      gfx.fillStyle(color);
-      gfx.fillRoundedRect(-30, -12, 60, 24, 6);
-      // Cockpit
-      gfx.fillStyle(0xaaddff, 0.8);
-      gfx.fillRoundedRect(-8, -18, 28, 10, 4);
-      // Wheels
-      gfx.fillStyle(0x222222);
-      gfx.fillCircle(-16, 14, 7);
-      gfx.fillCircle(16, 14, 7);
+      // Player gets a subtle cyan glow ring underneath
+      if (isPlayer) {
+        gfx.lineStyle(3, 0x00ffff, 0.45);
+        gfx.strokeCircle(0, 0, 36);
+      }
+
+      drawFn(gfx, color, isPlayer);
 
       gfx.setPosition(SAFE_PADDING + 40, y);
       this.carSprites.push({ gfx, baseY: y, index: i });
 
-      // Name tag
-      const name = this.add.text(SAFE_PADDING + 40, y - 26, carNames[i], {
+      // Name tag (extra padding for monster trucks which are taller)
+      const tagOffset = this.classId === 'multiplication' ? 34 : 28;
+      const name = this.add.text(SAFE_PADDING + 40, y - tagOffset, carNames[i], {
         fontSize: '12px',
-        color: i === 0 ? '#00ffff' : '#ffffff',
+        color: isPlayer ? '#00ffff' : '#ffffff',
         fontFamily: 'Arial',
         fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(6);
       this.carSprites[i].nameTag = name;
     }
+  }
+
+  // ── Go-Kart (Addition — Rookie League) ───────────────────────────────────
+  // Low, compact, open-top with a visible driver helmet, small wheels
+  _drawGoKart(g, color, isPlayer) {
+    const dark = this._darken(color);
+
+    // Main body — low flat pod
+    g.fillStyle(color);
+    g.fillRoundedRect(-26, -7, 52, 16, 4);
+
+    // Side pods
+    g.fillStyle(dark);
+    g.fillRoundedRect(-28, -3, 10, 10, 2);
+    g.fillRoundedRect(18, -3, 10, 10, 2);
+
+    // Nose (front taper)
+    g.fillStyle(color);
+    g.fillTriangle(26, -4, 36, 0, 26, 4);
+
+    // Open cockpit surround
+    g.fillStyle(dark);
+    g.fillRoundedRect(-10, -12, 22, 8, 3);
+
+    // Driver helmet
+    g.fillStyle(0xff3300);
+    g.fillCircle(-2, -13, 7);
+    g.fillStyle(0x88ccff, 0.85);
+    g.fillRoundedRect(-5, -17, 10, 6, 2);   // visor
+
+    // Wheels — small, 4 corners
+    g.fillStyle(0x111111);
+    g.fillCircle(-18, 9, 6);   // rear left
+    g.fillCircle(18, 9, 6);    // front left
+    // Wheel highlights
+    g.fillStyle(0x444444);
+    g.fillCircle(-18, 9, 3);
+    g.fillCircle(18, 9, 3);
+
+    // Exhaust pipe (rear right)
+    g.fillStyle(0x888888);
+    g.fillRect(-30, 2, 5, 4);
+
+    // Headlights
+    g.fillStyle(0xffffaa);
+    g.fillCircle(30, -2, 3);
+    g.fillCircle(30, 4, 3);
+  }
+
+  // ── Rally Car (Subtraction — Amateur Circuit) ─────────────────────────────
+  // Wider hatchback, roll cage, mud flaps, rear spoiler
+  _drawRallyCar(g, color, isPlayer) {
+    const dark = this._darken(color);
+
+    // Body — wider, taller than kart
+    g.fillStyle(color);
+    g.fillRoundedRect(-28, -10, 56, 22, 5);
+
+    // Hatchback roofline
+    g.fillStyle(dark);
+    g.fillRoundedRect(-16, -20, 34, 12, 4);
+
+    // Windshield
+    g.fillStyle(0x88ccff, 0.75);
+    g.fillRoundedRect(-12, -19, 26, 10, 3);
+
+    // Roll cage bars (top of roof)
+    g.lineStyle(2, 0x888888);
+    g.lineBetween(-10, -21, -10, -19);
+    g.lineBetween(10, -21, 10, -19);
+    g.lineBetween(-10, -21, 10, -21);
+
+    // Rear spoiler
+    g.fillStyle(0x888888);
+    g.fillRect(-26, -24, 10, 4);  // mount
+    g.fillRect(-30, -26, 18, 3);  // blade
+
+    // Front hood scoop
+    g.fillStyle(0x333333);
+    g.fillRoundedRect(10, -12, 12, 6, 2);
+
+    // Fender flares
+    g.fillStyle(dark);
+    g.fillRoundedRect(-32, 4, 10, 6, 2);
+    g.fillRoundedRect(22, 4, 10, 6, 2);
+
+    // Wheels — bigger than kart
+    g.fillStyle(0x111111);
+    g.fillCircle(-20, 12, 8);
+    g.fillCircle(20, 12, 8);
+    g.fillStyle(0x555555);
+    g.fillCircle(-20, 12, 4);
+    g.fillCircle(20, 12, 4);
+
+    // Mud flaps
+    g.fillStyle(0x222222);
+    g.fillRect(-26, 8, 4, 8);
+
+    // Headlights
+    g.fillStyle(0xffffaa);
+    g.fillRect(25, -7, 6, 4);
+    // Tail lights
+    g.fillStyle(0xff2200);
+    g.fillRect(-30, -7, 4, 4);
+  }
+
+  // ── Monster Truck (Multiplication — Pro Series) ───────────────────────────
+  // Tall body, massive chunky wheels, lifted suspension gap
+  _drawMonsterTruck(g, color, isPlayer) {
+    const dark = this._darken(color);
+
+    // MASSIVE WHEELS — the star of the show
+    // Rear wheel
+    g.fillStyle(0x111111);
+    g.fillCircle(-18, 12, 14);
+    // Tread lines (concentric)
+    g.lineStyle(2, 0x333333);
+    g.strokeCircle(-18, 12, 10);
+    g.strokeCircle(-18, 12, 6);
+    // Lug bolts
+    g.fillStyle(0x555555);
+    for (let a = 0; a < 6; a++) {
+      const ang = (a / 6) * Math.PI * 2;
+      g.fillCircle(-18 + Math.cos(ang) * 8, 12 + Math.sin(ang) * 8, 2);
+    }
+
+    // Front wheel
+    g.fillStyle(0x111111);
+    g.fillCircle(18, 12, 14);
+    g.lineStyle(2, 0x333333);
+    g.strokeCircle(18, 12, 10);
+    g.strokeCircle(18, 12, 6);
+    g.fillStyle(0x555555);
+    for (let a = 0; a < 6; a++) {
+      const ang = (a / 6) * Math.PI * 2;
+      g.fillCircle(18 + Math.cos(ang) * 8, 12 + Math.sin(ang) * 8, 2);
+    }
+
+    // Suspension / axle
+    g.fillStyle(0x666666);
+    g.fillRect(-22, -1, 40, 5);
+
+    // Body — blocky, tall, sits above the wheels
+    g.fillStyle(color);
+    g.fillRoundedRect(-22, -24, 44, 24, 4);
+
+    // Roof
+    g.fillStyle(dark);
+    g.fillRoundedRect(-18, -28, 36, 8, 3);
+
+    // Windshield
+    g.fillStyle(0x88ccff, 0.75);
+    g.fillRoundedRect(-14, -26, 28, 10, 3);
+
+    // Exhaust stacks (dual vertical pipes on hood)
+    g.fillStyle(0x888888);
+    g.fillRect(6, -30, 4, 10);
+    g.fillRect(12, -30, 4, 10);
+
+    // Grill
+    g.fillStyle(0x333333);
+    g.fillRoundedRect(16, -20, 8, 14, 2);
+    g.lineStyle(1, 0x555555);
+    for (let yy = -18; yy < -8; yy += 3) {
+      g.lineBetween(17, yy, 23, yy);
+    }
+
+    // Number plate
+    g.fillStyle(0xffffff);
+    g.fillRect(-8, -20, 14, 8);
+    g.fillStyle(0x000000);
+  }
+
+  // ── Formula 1 (Division — Championship) ──────────────────────────────────
+  // Sleek, low, elongated, pointed nose, large rear wing, front wings
+  _drawFormulaOne(g, color, isPlayer) {
+    const dark = this._darken(color);
+
+    // Rear wing (drawn first so body overlaps mount)
+    // Vertical endplates
+    g.fillStyle(dark);
+    g.fillRect(-34, -18, 4, 14);
+    g.fillRect(-22, -18, 4, 14);
+    // Horizontal wing blade
+    g.fillStyle(color);
+    g.fillRect(-36, -20, 20, 4);
+
+    // Rear diffuser
+    g.fillStyle(dark);
+    g.fillTriangle(-28, 8, -20, 8, -24, 14);
+
+    // Main body — very long, low, bullet-shaped
+    g.fillStyle(color);
+    g.fillRoundedRect(-28, -8, 58, 14, 4);
+
+    // Sidepods
+    g.fillStyle(dark);
+    g.fillRoundedRect(-22, -4, 16, 10, 3);
+    g.fillRoundedRect(4, -4, 16, 10, 3);
+
+    // Pointed nose cone
+    g.fillStyle(color);
+    g.fillTriangle(30, -5, 48, 0, 30, 5);
+    // Nose tip highlight
+    g.fillStyle(0xffffff, 0.3);
+    g.fillTriangle(40, -2, 47, 0, 40, 2);
+
+    // Open cockpit (monocoque)
+    g.fillStyle(dark);
+    g.fillRoundedRect(-8, -12, 18, 8, 3);
+
+    // Driver helmet
+    g.fillStyle(0xffffff);
+    g.fillCircle(0, -13, 6);
+    g.fillStyle(0x88ccff, 0.9);
+    g.fillRoundedRect(-4, -16, 9, 5, 2);   // visor
+
+    // Front wings — wide extensions past the body
+    g.fillStyle(color);
+    g.fillRect(22, 4, 26, 3);   // front wing plane
+    g.fillStyle(dark);
+    g.fillRect(24, 1, 3, 6);    // front wing endplate L
+    g.fillRect(44, 1, 3, 6);    // front wing endplate R
+
+    // Wheels — low-profile slicks
+    g.fillStyle(0x111111);
+    g.fillCircle(-18, 8, 7);   // rear
+    g.fillCircle(20, 8, 7);    // front
+    g.fillStyle(0x333333);
+    g.fillCircle(-18, 8, 3);
+    g.fillCircle(20, 8, 3);
+
+    // Halo safety device (thin arc over cockpit)
+    g.lineStyle(3, 0x888888);
+    g.beginPath();
+    g.arc(-4, -9, 10, Math.PI, 0, false);
+    g.strokePath();
+
+    // Headlights
+    g.fillStyle(0xffffaa);
+    g.fillCircle(45, -2, 2);
+    // Rear lights
+    g.fillStyle(0xff0000);
+    g.fillCircle(-28, 0, 3);
+  }
+
+  /** Darken a color by ~30% for shading/dark panels */
+  _darken(color) {
+    const r = Math.floor(((color >> 16) & 0xff) * 0.6);
+    const gr = Math.floor(((color >> 8) & 0xff) * 0.6);
+    const b = Math.floor((color & 0xff) * 0.6);
+    return (r << 16) | (gr << 8) | b;
   }
 
   _updateCarPositions() {
