@@ -32,6 +32,7 @@ export const AI_NAMES_BY_CLASS = {
   subtraction: ['Rally Rex', 'Gravel Gina', 'Drift Dan'],
   multiplication: ['Crusher Cal', 'Monster Meg', 'Titan Tim'],
   division: ['Formula Frank', 'Apex Amy', 'Champion Chad'],
+  advanced: ['Apex Alice', 'Turbo Taylor', 'Flash Felix'],
 };
 
 /** Car colors for player + 3 AI slots */
@@ -40,4 +41,5 @@ export const CAR_COLORS_BY_CLASS = {
   subtraction:    [0x44aaff, 0xff6644, 0xaaffaa, 0xffccaa],
   multiplication: [0xffcc00, 0xff8844, 0xcc66ff, 0x66ffcc],
   division:       [0xff4444, 0x88ccff, 0xffee44, 0xee88ff],
+  advanced:       [0xcc44ff, 0x9933cc, 0xff44cc, 0xaa22ff],
 };

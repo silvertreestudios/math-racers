@@ -38,7 +38,7 @@ export class MathEngine {
 
     for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
       problem = this._generate(op, trackConfig, tier);
-      const key = `${problem.operator}${problem.a}${problem.operator}${problem.b}`;
+      const key = `${problem.operator}${problem.a}_${problem.b}_${problem.c ?? ''}`;
 
       // Accept if not in recent history (full dedup window)
       if (!this._recentKeys.includes(key)) {
@@ -54,7 +54,7 @@ export class MathEngine {
     }
 
     // Absolute fallback — return whatever we last generated
-    const key = `${problem.operator}${problem.a}${problem.operator}${problem.b}`;
+    const key = `${problem.operator}${problem.a}_${problem.b}_${problem.c ?? ''}`;
     this._pushKey(key);
     return problem;
   }
@@ -71,6 +71,7 @@ export class MathEngine {
       case 'subtraction':    return this._subtraction(trackConfig, tier);
       case 'multiplication': return this._multiplication(trackConfig, tier);
       case 'division':       return this._division(trackConfig, tier);
+      case 'advanced':       return this._advanced(trackConfig, tier);
       default:               return this._addition(trackConfig, tier);
     }
   }
@@ -249,6 +250,251 @@ export class MathEngine {
     const distractors = this._divisionDistractors(dividend, divisor, correct);
     const answers = this._buildAnswerList(correct, distractors);
     return { a: dividend, b: divisor, correct, answers, answerIndex: answers.indexOf(correct), operator: '÷' };
+  }
+
+  // ─── Advanced (Superclass) ────────────────────────────────────────────────
+
+  _advanced(track, tier) {
+    switch (track.subType) {
+      case 'squareRoots':    return this._squareRoots(track, tier);
+      case 'orderOfOps':     return this._orderOfOps(track, tier);
+      case 'orderOfOpsHard': return this._orderOfOpsHard(track, tier);
+      case 'solveForX':      return this._solveForX(track, tier);
+      default:               return this._exponents(track, tier);
+    }
+  }
+
+  _exponents(track, tier) {
+    const SUP = { 2: '²', 3: '³', 4: '⁴', 5: '⁵' };
+    let expMax;
+    if (tier === 'easy')        expMax = 2;
+    else if (tier === 'medium') expMax = 3;
+    else                        expMax = track.exponentRange.max;
+
+    const exp  = this._rand(2, expMax);
+    const base = this._rand(track.baseRange.min, track.baseRange.max);
+    const correct = Math.pow(base, exp);
+
+    const candidates = new Set();
+    // base^(exp+1), base^(exp-1)
+    if (exp < 5) candidates.add(Math.pow(base, exp + 1));
+    if (exp > 1) { const v = Math.pow(base, exp - 1); if (v > 0) candidates.add(v); }
+    // (base±1)^exp
+    if (base > 2) { const v = Math.pow(base - 1, exp); if (v > 0) candidates.add(v); }
+    candidates.add(Math.pow(base + 1, exp));
+    // nearby ±10% rounded
+    const step = Math.max(1, Math.round(correct * 0.1));
+    candidates.add(correct + step);
+    if (correct - step > 0) candidates.add(correct - step);
+
+    const distractors = this._pickDistractors(candidates, correct, 3);
+    const answers = this._buildAnswerList(correct, distractors);
+    return {
+      a: base, b: exp, correct, answers,
+      answerIndex: answers.indexOf(correct),
+      operator: '^',
+      displayText: `${base}${SUP[exp] || `^${exp}`} = ?`,
+    };
+  }
+
+  _squareRoots(track, tier) {
+    let rootMax;
+    if (tier === 'easy')        rootMax = Math.min(track.rootRange.max, 5);
+    else if (tier === 'medium') rootMax = Math.min(track.rootRange.max, 7);
+    else                        rootMax = track.rootRange.max;
+
+    const root = this._rand(track.rootRange.min, rootMax);
+    const radicand = root * root;
+    const correct = root;
+
+    const candidates = new Set();
+    if (root > 1) candidates.add(root - 1);
+    candidates.add(root + 1);
+    if (root > 2) candidates.add(root - 2);
+    candidates.add(root + 2);
+    candidates.add(radicand);
+    const half = Math.floor(radicand / 2);
+    if (half !== correct && half > 0) candidates.add(half);
+
+    const distractors = this._pickDistractors(candidates, correct, 3);
+    const answers = this._buildAnswerList(correct, distractors);
+    return {
+      a: radicand, b: null, correct, answers,
+      answerIndex: answers.indexOf(correct),
+      operator: '√',
+      displayText: `√${radicand} = ?`,
+    };
+  }
+
+  _orderOfOps(track, tier) {
+    let opMax;
+    if (tier === 'easy')        opMax = 5;
+    else if (tier === 'medium') opMax = 7;
+    else                        opMax = track.operandRange.max;
+    const opMin = track.operandRange.min;
+
+    const patterns = ['a + b * c', 'a * b + c', 'a * b - c'];
+    const pattern = patterns[this._rand(0, patterns.length - 1)];
+
+    let a, b, c, correct, displayText;
+    if (pattern === 'a + b * c') {
+      a = this._rand(opMin, opMax);
+      b = this._rand(opMin, opMax);
+      c = this._rand(opMin, opMax);
+      correct = a + b * c;
+      displayText = `${a} + ${b} × ${c} = ?`;
+    } else if (pattern === 'a * b + c') {
+      a = this._rand(opMin, opMax);
+      b = this._rand(opMin, opMax);
+      c = this._rand(opMin, opMax);
+      correct = a * b + c;
+      displayText = `${a} × ${b} + ${c} = ?`;
+    } else {
+      // a * b - c, ensure positive result
+      a = this._rand(opMin, opMax);
+      b = this._rand(opMin, opMax);
+      const prod = a * b;
+      c = this._rand(opMin, Math.min(opMax, prod - 1 > 0 ? prod - 1 : opMin));
+      correct = prod - c;
+      displayText = `${a} × ${b} − ${c} = ?`;
+    }
+
+    // Wrong: left-to-right evaluation
+    let wrongLR;
+    if (pattern === 'a + b * c') wrongLR = (a + b) * c;
+    else if (pattern === 'a * b + c') wrongLR = a * (b + c);
+    else wrongLR = (a * b - c); // same as correct for this form, handle below
+
+    const candidates = new Set();
+    if (wrongLR !== correct && wrongLR > 0) candidates.add(wrongLR);
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+    if (correct - 2 > 0) candidates.add(correct - 2);
+    candidates.add(correct + 2);
+
+    const distractors = this._pickDistractors(candidates, correct, 3);
+    const answers = this._buildAnswerList(correct, distractors);
+    return {
+      a, b, c, correct, answers,
+      answerIndex: answers.indexOf(correct),
+      operator: 'oop',
+      displayText,
+    };
+  }
+
+  _orderOfOpsHard(track, tier) {
+    let opMax;
+    if (tier === 'easy')        opMax = 7;
+    else if (tier === 'medium') opMax = 10;
+    else                        opMax = track.operandRange.max;
+    const opMin = track.operandRange.min;
+
+    const patterns = ['(a + b) * c', '(a - b) * c', 'a * (b + c)'];
+    const pattern = patterns[this._rand(0, patterns.length - 1)];
+
+    let a, b, c, correct, displayText, wrongNoParen;
+    if (pattern === '(a + b) * c') {
+      a = this._rand(opMin, opMax);
+      b = this._rand(opMin, opMax);
+      c = this._rand(opMin, opMax);
+      correct = (a + b) * c;
+      displayText = `(${a} + ${b}) × ${c} = ?`;
+      wrongNoParen = a + b * c;
+    } else if (pattern === '(a - b) * c') {
+      b = this._rand(opMin, opMax - 1);
+      a = this._rand(b + 1, opMax + b); // ensure a > b
+      c = this._rand(opMin, opMax);
+      correct = (a - b) * c;
+      displayText = `(${a} − ${b}) × ${c} = ?`;
+      wrongNoParen = a - b * c;
+    } else {
+      a = this._rand(opMin, opMax);
+      b = this._rand(opMin, opMax);
+      c = this._rand(opMin, opMax);
+      correct = a * (b + c);
+      displayText = `${a} × (${b} + ${c}) = ?`;
+      wrongNoParen = a * b + c;
+    }
+
+    const candidates = new Set();
+    if (wrongNoParen !== correct && wrongNoParen > 0) candidates.add(wrongNoParen);
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+    if (correct - 2 > 0) candidates.add(correct - 2);
+    candidates.add(correct + 2);
+
+    const distractors = this._pickDistractors(candidates, correct, 3);
+    const answers = this._buildAnswerList(correct, distractors);
+    return {
+      a, b, c, correct, answers,
+      answerIndex: answers.indexOf(correct),
+      operator: 'oop',
+      displayText,
+    };
+  }
+
+  _solveForX(track, tier) {
+    // Choose form based on tier
+    let formPool;
+    if (tier === 'easy')        formPool = ['add'];
+    else if (tier === 'medium') formPool = ['add', 'sub'];
+    else                        formPool = ['add', 'sub', 'mul', 'div'];
+
+    const form = formPool[this._rand(0, formPool.length - 1)];
+    let a, b, correct, displayText;
+
+    if (form === 'add') {
+      // X + a = b → X = b - a
+      a = this._rand(1, 20);
+      correct = this._rand(1, 30);
+      b = correct + a;
+      displayText = `X + ${a} = ${b}`;
+    } else if (form === 'sub') {
+      // X − a = b → X = b + a
+      a = this._rand(1, 20);
+      b = this._rand(1, 30);
+      correct = b + a;
+      displayText = `X − ${a} = ${b}`;
+    } else if (form === 'mul') {
+      // a × X = b → X = b / a
+      a = this._rand(2, 12);
+      correct = this._rand(2, 9);
+      b = a * correct;
+      displayText = `${a} × X = ${b}`;
+    } else {
+      // b ÷ X = a → X = b / a; pick X first
+      correct = this._rand(2, 9);
+      a = this._rand(2, 12);
+      b = correct * a;
+      displayText = `${b} ÷ X = ${a}`;
+    }
+
+    const candidates = new Set();
+    // Wrong-op solve
+    if (form === 'add') {
+      candidates.add(b + a); // added instead of subtracted
+    } else if (form === 'sub') {
+      candidates.add(b - a); // subtracted instead of added
+    } else if (form === 'mul') {
+      candidates.add(b * a); // multiplied instead of divided
+    } else {
+      candidates.add(b / a > 0 ? Math.round(b / a) : b + a);
+    }
+    // Off-by-one and nearby
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+    if (correct - 2 > 0) candidates.add(correct - 2);
+    candidates.add(correct + 2);
+    candidates.add(correct + 3);
+
+    const distractors = this._pickDistractors(candidates, correct, 3);
+    const answers = this._buildAnswerList(correct, distractors);
+    return {
+      a, b, correct, answers,
+      answerIndex: answers.indexOf(correct),
+      operator: '=',
+      displayText: `${displayText} → X = ?`,
+    };
   }
 
   // ─── Distractor generators ────────────────────────────────────────────────

@@ -251,6 +251,7 @@ export class RaceScene extends Phaser.Scene {
       subtraction:    (g, c, isPlayer) => this._drawRallyCar(g, c, isPlayer),
       multiplication: (g, c, isPlayer) => this._drawMonsterTruck(g, c, isPlayer),
       division:       (g, c, isPlayer) => this._drawFormulaOne(g, c, isPlayer),
+      advanced:       (g, c, isPlayer) => this._drawSupercar(g, c, isPlayer),
     }[this.classId] || ((g, c, isPlayer) => this._drawGoKart(g, c, isPlayer));
 
     for (let i = 0; i < 4; i++) {
@@ -526,6 +527,91 @@ export class RaceScene extends Phaser.Scene {
     g.fillCircle(-28, 0, 3);
   }
 
+  // ── Supercar (Advanced — Superclass) ─────────────────────────────────────
+  // Lamborghini-style: very low, angular, enclosed cockpit, swept windshield,
+  // large rear diffuser, wide flat stance
+  _drawSupercar(g, color, isPlayer) {
+    const dark = this._darken(color);
+
+    // Rear diffuser — angular wide piece
+    g.fillStyle(0x222222);
+    g.fillTriangle(-34, 8, -20, 8, -27, 16);
+    g.fillTriangle(-20, 8, -10, 8, -15, 14);
+
+    // Wide low body — very flat and wide
+    g.fillStyle(color);
+    g.fillRoundedRect(-30, -6, 60, 14, 3);
+
+    // Low angular nose — sharp taper
+    g.fillStyle(color);
+    g.fillTriangle(30, -5, 48, 0, 30, 5);
+    // Nose tip
+    g.fillStyle(0xffffff, 0.2);
+    g.fillTriangle(42, -2, 47, 0, 42, 2);
+
+    // Side air intakes / vents
+    g.fillStyle(dark);
+    g.fillRoundedRect(-28, -2, 12, 6, 2);
+    g.fillRoundedRect(8, -2, 12, 6, 2);
+
+    // Roof — very low swept-back profile
+    g.fillStyle(dark);
+    g.fillRoundedRect(-14, -16, 28, 12, 4);
+
+    // Swept-back windshield
+    g.fillStyle(0x88ccff, 0.8);
+    // Front windshield: angled, wide
+    g.fillTriangle(-10, -14, 14, -14, 14, -4);
+    // Rear window
+    g.fillTriangle(-14, -14, -4, -14, -14, -6);
+
+    // Rear wing — low, wide blade
+    g.fillStyle(0x444444);
+    g.fillRect(-34, -10, 4, 10);  // endplate
+    g.fillStyle(color);
+    g.fillRect(-36, -12, 22, 4);  // wing blade
+
+    // Front splitter
+    g.fillStyle(dark);
+    g.fillRect(28, 3, 20, 3);
+
+    // Wheels — wide, low-profile racing slicks
+    g.fillStyle(0x111111);
+    g.fillEllipse(-20, 10, 18, 12);   // rear
+    g.fillEllipse(20, 10, 18, 12);    // front
+    // Rim highlights
+    g.fillStyle(0x888888);
+    g.fillEllipse(-20, 10, 8, 6);
+    g.fillEllipse(20, 10, 8, 6);
+    // Lug bolts
+    g.fillStyle(0x555555);
+    g.fillCircle(-20, 10, 2);
+    g.fillCircle(20, 10, 2);
+
+    // Headlights — sharp angular slits
+    g.fillStyle(0xffffee);
+    g.fillRect(40, -4, 6, 2);
+    g.fillRect(40, 1, 6, 2);
+
+    // Tail lights
+    g.fillStyle(0xff2200);
+    g.fillRect(-30, -4, 4, 3);
+    g.fillRect(-30, 1, 4, 3);
+
+    // Exhaust tips (dual center)
+    g.fillStyle(0x888888);
+    g.fillCircle(-22, 14, 3);
+    g.fillCircle(-18, 14, 3);
+    g.fillStyle(0x333333);
+    g.fillCircle(-22, 14, 1);
+    g.fillCircle(-18, 14, 1);
+
+    // Lightning bolt emblem on door
+    g.fillStyle(0xffee00, 0.9);
+    g.fillTriangle(-4, -5, 2, -5, -2, 0);
+    g.fillTriangle(-2, 0, 4, 0, 0, 6);
+  }
+
   /** Darken a color by ~30% for shading/dark panels */
   _darken(color) {
     const r = Math.floor(((color >> 16) & 0xff) * 0.6);
@@ -714,7 +800,7 @@ export class RaceScene extends Phaser.Scene {
     const tier = this.difficultyManager.getNextTier();
     const problem = this.mathEngine.generateProblem(this.trackConfig, tier);
     this.currentProblem = problem;
-    this.problemText.setText(`${problem.a} ${problem.operator} ${problem.b} = ?`);
+    this.problemText.setText(problem.displayText || `${problem.a} ${problem.operator} ${problem.b} = ?`);
 
     // Set answer button texts
     for (let i = 0; i < 4; i++) {

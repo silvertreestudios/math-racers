@@ -76,6 +76,24 @@ export const CLASSES = {
       'champions-ring',
     ],
   },
+  'advanced': {
+    id: 'advanced',
+    name: 'Superclass',
+    operation: 'advanced',
+    operationSymbol: '⚡',
+    emoji: '⚡',
+    carType: 'Supercars',
+    unlockCost: 20000,
+    color: 0xcc44ff,
+    bucksMultiplier: 4,
+    tracks: [
+      'power-circuit',
+      'root-run',
+      'formula-speedway',
+      'apex-express',
+      'champions-formula',
+    ],
+  },
 };
 
 export const TRACKS = {
@@ -286,6 +304,58 @@ export const TRACKS = {
     fallbackAnswerTimeMs: 20000,
     divisorRange: { min: 12, max: 30 },
     quotientRange: { min: 12, max: 40 },
+  },
+
+  // ── Superclass (Advanced) ─────────────────────────────────────────────
+  'power-circuit': {
+    id: 'power-circuit',
+    classId: 'advanced',
+    name: 'Power Circuit',
+    trackIndex: 0,
+    description: 'Exponents (3⁴ = 81)',
+    subType: 'exponents',
+    fallbackAnswerTimeMs: 8000,
+    baseRange: { min: 2, max: 9 },
+    exponentRange: { min: 2, max: 5 },
+  },
+  'root-run': {
+    id: 'root-run',
+    classId: 'advanced',
+    name: 'Root Run',
+    trackIndex: 1,
+    description: 'Square Roots (√81 = 9)',
+    subType: 'squareRoots',
+    fallbackAnswerTimeMs: 8000,
+    rootRange: { min: 2, max: 9 },
+  },
+  'formula-speedway': {
+    id: 'formula-speedway',
+    classId: 'advanced',
+    name: 'Formula Speedway',
+    trackIndex: 2,
+    description: 'Order of Ops (2 + 3 × 4)',
+    subType: 'orderOfOps',
+    fallbackAnswerTimeMs: 12000,
+    operandRange: { min: 2, max: 9 },
+  },
+  'apex-express': {
+    id: 'apex-express',
+    classId: 'advanced',
+    name: 'Apex Express',
+    trackIndex: 3,
+    description: 'Parentheses ((3+5) × 4)',
+    subType: 'orderOfOpsHard',
+    fallbackAnswerTimeMs: 15000,
+    operandRange: { min: 2, max: 15 },
+  },
+  'champions-formula': {
+    id: 'champions-formula',
+    classId: 'advanced',
+    name: "Champion's Formula",
+    trackIndex: 4,
+    description: 'Solve for X (X + 7 = 22)',
+    subType: 'solveForX',
+    fallbackAnswerTimeMs: 15000,
   },
 };
 
