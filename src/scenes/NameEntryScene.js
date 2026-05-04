@@ -45,18 +45,35 @@ export class NameEntryScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // ── HTML input overlay ────────────────────────────────────────────────
-    // Get the canvas element's bounding rect to position the input correctly
-    const canvas = this.game.canvas;
-    const canvasRect = canvas.getBoundingClientRect();
+    // Detect portrait mode — the game container is CSS-rotated 90° clockwise
+    // when innerWidth < innerHeight. The input must be counter-rotated and
+    // repositioned to appear visually centered on the rotated canvas.
+    const isPortrait = window.innerWidth < window.innerHeight;
 
-    // Compute input position in page coordinates
-    // The canvas may be CSS-rotated; use the canvas rect dimensions directly
     const inputW = Math.min(360, w * 0.6);
     const inputH = Math.max(56, h * 0.1);
 
-    // Center within the canvas rect
-    const inputLeft = canvasRect.left + (canvasRect.width - inputW) / 2;
-    const inputTop  = canvasRect.top  + canvasRect.height * 0.42;
+    // Canvas center in CSS-pixel page coordinates.
+    // In portrait: the game container is rotated 90° CW, so the visual
+    // center of the canvas maps to a different point in page space.
+    let pageCX, pageCY;
+    if (isPortrait) {
+      // Container is rotated 90° CW around its own center.
+      // Container dimensions in page space: width=innerWidth, height=innerHeight.
+      // Visual canvas center (cx, cy) in canvas space maps to page space as:
+      //   pageX = containerLeft + containerHeight - cy * (containerHeight / h)
+      //   pageY = containerTop  + cx * (containerWidth / w)
+      // Simplified for full-screen (containerLeft=0, containerTop=0):
+      const scaleX = window.innerHeight / w; // canvas w fills the rotated container height
+      const scaleY = window.innerWidth  / h;
+      pageCX = window.innerHeight - cy * scaleX;
+      pageCY = cx * scaleY;
+    } else {
+      const canvas = this.game.canvas;
+      const rect   = canvas.getBoundingClientRect();
+      pageCX = rect.left + rect.width  * 0.5;
+      pageCY = rect.top  + rect.height * 0.42; // slightly above center
+    }
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -68,30 +85,34 @@ export class NameEntryScene extends Phaser.Scene {
     input.spellcheck = false;
 
     Object.assign(input.style, {
-      position:     'fixed',
-      left:         `${inputLeft}px`,
-      top:          `${inputTop}px`,
-      width:        `${inputW}px`,
-      height:       `${inputH}px`,
-      fontSize:     `${Math.min(28, inputH * 0.5)}px`,
-      fontFamily:   'Arial Black, Arial, sans-serif',
-      fontWeight:   'bold',
-      color:        '#ffffff',
-      background:   '#1a1a4e',
-      border:       '3px solid #4488ff',
-      borderRadius: '10px',
-      padding:      '0 16px',
-      outline:      'none',
-      textAlign:    'center',
-      boxSizing:    'border-box',
-      zIndex:       '1000',
+      position:        'fixed',
+      left:            `${pageCX - inputW / 2}px`,
+      top:             `${pageCY - inputH / 2}px`,
+      width:           `${inputW}px`,
+      height:          `${inputH}px`,
+      // Counter-rotate so text appears upright on rotated canvas
+      transform:       isPortrait ? 'rotate(-90deg)' : 'none',
+      transformOrigin: 'center center',
+      fontSize:        `${Math.min(28, inputH * 0.5)}px`,
+      fontFamily:      'Arial Black, Arial, sans-serif',
+      fontWeight:      'bold',
+      color:           '#ffffff',
+      background:      '#1a1a4e',
+      border:          '3px solid #4488ff',
+      borderRadius:    '10px',
+      padding:         '0 16px',
+      outline:         'none',
+      textAlign:       'center',
+      boxSizing:       'border-box',
+      zIndex:          '1000',
     });
 
     document.body.appendChild(input);
     this._input = input;
 
-    // Focus after a short delay (some mobile browsers need this)
-    this.time.delayedCall(150, () => { if (input.parentNode) input.focus(); });
+    // Focus immediately; also retry on next frame for browsers that defer keyboard
+    input.focus();
+    this.time.delayedCall(100, () => { if (input.parentNode) input.focus(); });
 
     // Submit on Enter key
     input.addEventListener('keydown', (e) => {
