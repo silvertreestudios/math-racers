@@ -6,7 +6,7 @@
 import { CLASSES } from '../config/tracks.js';
 import { SAFE_PADDING } from '../config/constants.js';
 
-const CLASS_ORDER = ['addition', 'subtraction', 'multiplication', 'division'];
+const CLASS_ORDER = ['addition', 'subtraction', 'multiplication', 'division', 'advanced'];
 
 export class ClassSelectScene extends Phaser.Scene {
   constructor() {
@@ -55,7 +55,7 @@ export class ClassSelectScene extends Phaser.Scene {
     const { w, h } = this;
     const count = CLASS_ORDER.length;
 
-    // Layout: 2×2 grid (2 columns, 2 rows)
+    // Layout: 2-column grid; last row is centered if it has only 1 card
     const cols = 2;
     const rows = Math.ceil(count / cols);
     const btnH = Math.max(48, h * 0.07);
@@ -63,15 +63,24 @@ export class ClassSelectScene extends Phaser.Scene {
     const bottomReserve = SAFE_PADDING + btnH + 8; // safe pad + button + gap
     const availH = h - startY - bottomReserve;
     const cardW = Math.min(320, (w - SAFE_PADDING * 2 - 20) / cols);
-    const cardH = Math.min(140, (availH - 16) / rows); // 16 = one gapY slot
+    const cardH = Math.min(120, (availH - (rows - 1) * 12) / rows);
     const gapX = (w - SAFE_PADDING * 2 - cardW * cols) / (cols + 1);
-    const gapY = 16;
+    const gapY = Math.min(16, (availH - cardH * rows) / Math.max(1, rows - 1));
 
     for (let i = 0; i < count; i++) {
       const classId = CLASS_ORDER[i];
-      const col = i % cols;
       const row = Math.floor(i / cols);
-      const cx = SAFE_PADDING + gapX + col * (cardW + gapX) + cardW / 2;
+      const itemsInRow = Math.min(cols, count - row * cols);
+      const colInRow = i % cols;
+
+      let cx;
+      if (itemsInRow < cols) {
+        // Last row with a single card — center it horizontally
+        cx = w / 2;
+      } else {
+        cx = SAFE_PADDING + gapX + colInRow * (cardW + gapX) + cardW / 2;
+      }
+
       const cy = startY + row * (cardH + gapY) + cardH / 2;
       this._buildCard(classId, cx, cy, cardW, cardH);
     }
