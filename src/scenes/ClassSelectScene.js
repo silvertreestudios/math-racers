@@ -43,8 +43,9 @@ export class ClassSelectScene extends Phaser.Scene {
     this._buildCards();
 
     // ── Back button ───────────────────────────────────────────────────────
+    const btnH = Math.max(48, h * 0.07);
     this._makeButton(
-      SAFE_PADDING + 60, h - SAFE_PADDING - 28,
+      SAFE_PADDING + 60, h - SAFE_PADDING - btnH / 2,
       '← Back', 0x555577,
       () => this.scene.start('TitleScene')
     );
@@ -57,11 +58,14 @@ export class ClassSelectScene extends Phaser.Scene {
     // Layout: 2×2 grid (2 columns, 2 rows)
     const cols = 2;
     const rows = Math.ceil(count / cols);
+    const btnH = Math.max(48, h * 0.07);
+    const startY = Math.max(80, h * 0.17);
+    const bottomReserve = SAFE_PADDING + btnH + 8; // safe pad + button + gap
+    const availH = h - startY - bottomReserve;
     const cardW = Math.min(320, (w - SAFE_PADDING * 2 - 20) / cols);
-    const cardH = Math.min(140, (h - 120 - SAFE_PADDING * 2) / rows);
+    const cardH = Math.min(140, (availH - 16) / rows); // 16 = one gapY slot
     const gapX = (w - SAFE_PADDING * 2 - cardW * cols) / (cols + 1);
     const gapY = 16;
-    const startY = 90;
 
     for (let i = 0; i < count; i++) {
       const classId = CLASS_ORDER[i];

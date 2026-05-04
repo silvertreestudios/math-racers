@@ -52,8 +52,9 @@ export class TrackSelectScene extends Phaser.Scene {
     this._buildTrackCards();
 
     // ── Back button ───────────────────────────────────────────────────────
+    const btnH = Math.max(48, h * 0.07);
     this._makeButton(
-      SAFE_PADDING + 60, h - SAFE_PADDING - 28,
+      SAFE_PADDING + 60, h - SAFE_PADDING - btnH / 2,
       '← Back', 0x555577,
       () => this.scene.start('ClassSelectScene')
     );
@@ -65,10 +66,13 @@ export class TrackSelectScene extends Phaser.Scene {
     const count = trackIds.length; // 5
 
     const cardW = Math.min(w - SAFE_PADDING * 2, 700);
-    const cardH = Math.max(52, Math.min(72, (h - 120 - SAFE_PADDING * 2 - 56) / count - 8));
+    const btnH = Math.max(48, h * 0.07);
+    const startY = Math.max(80, h * 0.17);
+    const bottomReserve = SAFE_PADDING + btnH + 8;
+    const availH = h - startY - bottomReserve;
+    const gap = 8;
+    const cardH = Math.max(48, Math.min(72, (availH - gap * (count - 1)) / count));
     const startX = w / 2 - cardW / 2;
-    const startY = 88;
-    const gap = 10;
 
     for (let i = 0; i < count; i++) {
       const trackId = trackIds[i];
