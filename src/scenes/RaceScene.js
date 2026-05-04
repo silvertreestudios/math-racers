@@ -37,11 +37,16 @@ export class RaceScene extends Phaser.Scene {
     this.mathEngine = new MathEngine();
     this.mathEngine.reset(); // clear repeat-prevention history for this race
 
-    // Get per-class stats for AI calibration — falls back to easy defaults
-    // on first race in a new class so the player isn't overwhelmed.
+    // Get per-class stats for AI calibration — falls back to track-specific
+    // defaults on first race in a new class so the player isn't overwhelmed.
+    // Tracks with harder problems use longer fallback times so the AI doesn't
+    // answer impossibly fast before the player has established a history.
     const progress = this.registry.get('progress');
-    const playerAccuracy = progress ? progress.accuracyForClass(this.classId) : 0.7;
-    const playerAvgTime  = progress ? progress.avgAnswerTimeMsForClass(this.classId) : 4000;
+    const trackFallbackTime = this.trackConfig.fallbackAnswerTimeMs || 5000;
+    const playerAccuracy = progress ? progress.accuracyForClass(this.classId) : 0.5;
+    const playerAvgTime  = progress
+      ? (progress.avgAnswerTimeMsForClass(this.classId) || trackFallbackTime)
+      : trackFallbackTime;
 
     this.aiRacers = [
       new AIRacer(0, playerAccuracy, playerAvgTime),
