@@ -62,6 +62,14 @@ export class TitleScene extends Phaser.Scene {
       strokeThickness: 8,
     }).setOrigin(0.5);
 
+    // Subtitle
+    this.add.text(cx, cy + h * 0.1, 'Solve math · Race to win!', {
+      fontSize: `${Math.min(22, w * 0.028)}px`,
+      color: '#ffffff',
+      fontFamily: 'Arial',
+      alpha: 0.85,
+    }).setOrigin(0.5);
+
     // Pulse animation on logo
     this.tweens.add({
       targets: [mathText, racersText],
