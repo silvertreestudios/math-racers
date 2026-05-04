@@ -370,31 +370,31 @@ export class ProgressManager {
 
   /**
    * Per-class windowed accuracy (last 5 races for this class).
-   * Falls back to 0.7 when no history for the class — deliberately easier
+   * Falls back to 0.5 when no history for the class — deliberately easier
    * so the first race in a new class feels approachable.
    * @param {string} classId
    */
   accuracyForClass(classId) {
     const races = (this.data.stats.recentRacesByClass || {})[classId] || [];
-    if (races.length === 0) return 0.7;
+    if (races.length === 0) return 0.5;
     let correct = 0, answered = 0;
     for (const r of races) {
       correct += r.correct;
       answered += r.answered;
     }
-    return answered > 0 ? correct / answered : 0.7;
+    return answered > 0 ? correct / answered : 0.5;
   }
 
   /**
    * Per-class windowed avg answer time (last 5 races for this class).
-   * Falls back to 4000ms when no history — deliberately slower default
+   * Falls back to 5000ms when no history — deliberately slower default
    * so AI isn't tuned too tight on the first race of a new class.
    * @param {string} classId
    */
   avgAnswerTimeMsForClass(classId) {
     const races = (this.data.stats.recentRacesByClass || {})[classId] || [];
     const withTime = races.filter(r => r.avgTimeMs != null);
-    if (withTime.length === 0) return 4000;
+    if (withTime.length === 0) return 5000;
     const sum = withTime.reduce((s, r) => s + r.avgTimeMs, 0);
     return sum / withTime.length;
   }

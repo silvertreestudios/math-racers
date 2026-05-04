@@ -22,18 +22,18 @@ export class AIRacer {
    * @param {number} playerAccuracy  player's windowed accuracy (0-1), default 0.8
    * @param {number} playerAvgTimeMs  player's windowed avg answer time in ms, default ~3000
    */
-  constructor(index, playerAccuracy = 0.8, playerAvgTimeMs = 3000) {
+  constructor(index, playerAccuracy = 0.5, playerAvgTimeMs = 3000) {
     this.index = index;
     this.worldX = 0;
     this.finished = false;
     this.finishTime = null;
 
-    // Assign accuracy: player accuracy ± 20%, clamped to [0.3, 0.95]
+    // Assign accuracy: player accuracy ± 20%, clamped to [0.3, 0.80]
     const accOffset = (Math.random() * 0.4 - 0.2); // -0.2 to +0.2
-    this.accuracy = Math.min(0.95, Math.max(0.3, playerAccuracy + accOffset));
+    this.accuracy = Math.min(0.80, Math.max(0.3, playerAccuracy + accOffset));
 
-    // Base answer interval: 5% slower than player avg (multiply by 1.05)
-    this.baseAnswerTimeMs = playerAvgTimeMs * 1.05;
+    // Base answer interval: 15% slower than player avg (multiply by 1.15)
+    this.baseAnswerTimeMs = playerAvgTimeMs * 1.15;
 
     // Speed state
     this.speed = PLAYER_BASE_SPEED;
