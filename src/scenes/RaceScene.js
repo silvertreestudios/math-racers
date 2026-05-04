@@ -634,6 +634,16 @@ export class RaceScene extends Phaser.Scene {
       fontFamily: 'Arial',
       fontStyle: 'bold',
     }).setOrigin(1, 0).setDepth(20);
+
+    // Speed indicator — below streak
+    this.speedText = this.add.text(w - SAFE_PADDING, SAFE_PADDING + 26, '', {
+      fontSize: '13px',
+      color: '#aaddff',
+      fontFamily: 'Arial',
+    }).setOrigin(1, 0).setDepth(20);
+
+    // Finish line graphic (checkerboard, hidden until near finish)
+    this._buildFinishLine();
   }
 
   _createStreakLabel() {
@@ -648,6 +658,26 @@ export class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(30).setAlpha(0);
   }
 
+  _buildFinishLine() {
+    const { w, h } = this;
+    const roadTop = h * 0.40;
+    const roadH = h * 0.30;
+    const squareSize = 12;
+    const cols = 2;
+    const rows = Math.ceil(roadH / squareSize);
+    const gfx = this.add.graphics().setDepth(1).setAlpha(0);
+    this._finishLineGfx = gfx;
+    this._finishLineX = w - SAFE_PADDING - 20; // matches trackEndX in _updateCarPositions
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const isLight = (r + c) % 2 === 0;
+        gfx.fillStyle(isLight ? 0xffffff : 0x000000, 0.9);
+        gfx.fillRect(c * squareSize, roadTop + r * squareSize, squareSize, squareSize);
+      }
+    }
+    gfx.setX(this._finishLineX);
+  }
+
   _updateProgressBar() {
     const { w } = this;
     const fraction = Math.min(1, this.playerWorldX / FINISH_LINE_X);
@@ -655,6 +685,17 @@ export class RaceScene extends Phaser.Scene {
     this.progressBarFill.setX(w / 2 - this._progressBarWidth / 2);
     const acc = this.problemsAnswered > 0 ? Math.round((this.correctAnswers / this.problemsAnswered) * 100) : 100;
     this.counterText.setText(`${acc}% accuracy · ${this.problemsAnswered} answered`);
+
+    // Speed indicator
+    const effectiveSpeed = Math.max(20, this.playerSpeed + this.speedModifier);
+    const mph = Math.round(effectiveSpeed * 0.5);
+    this.speedText.setText(`${mph} mph`);
+
+    // Show finish line checkerboard when within 10% of finish
+    if (this._finishLineGfx) {
+      const show = fraction >= 0.90;
+      this._finishLineGfx.setAlpha(show ? 1 : 0);
+    }
   }
 
   // ─── Problem Flow ────────────────────────────────────────────────────────
