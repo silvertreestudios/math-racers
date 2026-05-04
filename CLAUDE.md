@@ -20,7 +20,7 @@
 
 ```
 math-racers/
-├── index.html              # Entry HTML + portrait overlay + orientation CSS
+├── index.html              # Entry HTML + CSS-rotation orientation strategy
 ├── package.json
 ├── vite.config.js
 ├── DESIGN.md               # Full game design document
@@ -29,18 +29,20 @@ math-racers/
 ├── src/
 │   ├── main.js             # Phaser game config & boot
 │   ├── scenes/
-│   │   ├── BootScene.js    # Asset preloading
-│   │   ├── TitleScene.js   # Title screen + RACE! button
-│   │   ├── RaceScene.js    # Core gameplay
-│   │   └── ResultsScene.js # Post-race results
+│   │   ├── BootScene.js        # Asset preloading
+│   │   ├── TitleScene.js       # Title screen + RACE! button
+│   │   ├── ClassSelectScene.js # Pick a racing class (operation)
+│   │   ├── TrackSelectScene.js # Pick a track within a class
+│   │   ├── RaceScene.js        # Core gameplay
+│   │   └── ResultsScene.js     # Post-race results + bucks
 │   ├── systems/
-│   │   ├── MathEngine.js   # Problem generation + smart distractors
-│   │   ├── AIRacer.js      # AI opponent behavior
-│   │   └── ProgressManager.js # Save/load via LocalStorage
+│   │   ├── MathEngine.js       # Problem generation + smart distractors (all 4 ops)
+│   │   ├── AIRacer.js          # AI opponent behavior (per-class calibration)
+│   │   └── ProgressManager.js  # Save/load, class/track unlocks, trophies
 │   └── config/
 │       ├── constants.js    # Game constants (speeds, bucks, streaks)
-│       ├── cars.js         # Car definitions
-│       └── tracks.js       # Track definitions
+│       ├── cars.js         # Car colors and AI names per class
+│       └── tracks.js       # All 4 classes + 20 track definitions
 └── public/assets/          # Static assets (placeholder for now)
 ```
 
@@ -70,9 +72,9 @@ These are non-negotiable. Every scene, every UI element must follow these rules.
 
 1. **Full-screen adaptive canvas** — The game MUST fill the entire screen on any device. No letterboxing, no dead space, no black bars. Use `Phaser.Scale.RESIZE` so the game adapts to the actual viewport dimensions.
 
-2. **Landscape orientation lock** — The game MUST lock to landscape via the Screen Orientation API (`screen.orientation.lock('landscape')`). If on a portrait device that can't lock, show a full-screen "Please rotate your device" overlay that auto-hides when landscape is detected.
+2. **Landscape-always via CSS rotation** — The game MUST always appear in landscape orientation. If the device is in portrait, `#game-container` is CSS-rotated 90° clockwise with swapped dimensions (width↔height). Touch/pointer coordinates are remapped in the capture phase before Phaser's input manager sees them. The Screen Orientation API lock is attempted as a best-effort bonus but is NOT relied upon. **No "please rotate" overlay** — the game handles it silently.
 
-3. **20px safe area padding** — ALL buttons, text, and interactive elements MUST be at least 20px from every screen edge. Account for mobile safe areas (notches, rounded corners) using CSS `env(safe-area-inset-*)`. No element should ever be clipped or hidden under browser chrome.
+3. **20px safe area padding** — ALL buttons, text, and interactive elements MUST be at least 20px from every screen edge. No element should ever be clipped or hidden under browser chrome.
 
 4. **Proportional positioning** — All layout positions MUST use `this.scale.width` / `this.scale.height` (percentage-based), never hardcoded pixel coordinates that assume a fixed resolution.
 
@@ -80,12 +82,31 @@ These are non-negotiable. Every scene, every UI element must follow these rules.
 
 ### Math & Gameplay
 
-- Smart distractors ONLY — never generate random wrong answers. Use: off-by-one, wrong-operation, carry errors, digit swaps, nearby values.
-- No fail state — wrong answers slow you down but you always finish.
-- Problems keep coming until the player's car crosses the finish line.
+- **Smart distractors ONLY** — never generate random wrong answers. Use operation-specific strategies: off-by-one, wrong-operation, carry/borrow errors, digit swaps, nearby values, off-by-factor, partial-product.
+- **No fail state** — wrong answers slow you down but you always finish the race.
+- **Problems keep coming** until the player's car crosses the finish line.
+- **No-repeat rule** — track the last 5 problem keys per race and regenerate on collision (bail-out after 10 attempts to handle tiny number ranges).
+
+### AI Calibration
+
+- AI difficulty is calibrated **per class** using `accuracyForClass(classId)` and `avgAnswerTimeMsForClass(classId)` from ProgressManager.
+- First race in a new class defaults to 70% accuracy / 4,000ms (approachable). Do NOT use the global `accuracy` / `avgAnswerTimeMs` getters for AI construction.
+
+### Bucks Calculation
+
+Bucks scale by class multiplier and track index. Always compute in ResultsScene as:
+```js
+const scaledPosition = Math.round(BUCKS_BY_POSITION[pos-1] * multiplier);
+const trackBonus = Math.round(Math.round(BUCKS_BY_POSITION[0] * multiplier) * 0.1 * trackIndex);
+const positionPayout = scaledPosition + trackBonus;
+// Bonuses also scale:
+const accuracyBonus = accuracy === 100 ? Math.round(BUCKS_ACCURACY_BONUS * multiplier) : 0;
+const streakBonus   = streak >= 5      ? Math.round(BUCKS_STREAK_BONUS   * multiplier) : 0;
+```
 
 ### General Rules
 
 - LocalStorage for all persistence (no backend, no server calls)
 - No TypeScript, no external fonts, no `sudo`
-- System font stack: Arial Black, Arial, sans-serif
+- System font stack: `Arial Black, Arial, sans-serif`
+- Schema version is currently **2** — bump and migrate gracefully when adding new save fields
