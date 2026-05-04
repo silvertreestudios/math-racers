@@ -69,7 +69,8 @@ function defaultSave() {
       totalAnswerTimeMs: 0,
       recentRaces: [],          // global window kept for backward compat
       recentRacesByClass: {},   // { [classId]: [{ correct, answered, avgTimeMs }] }
-      winStreak: 0,             // consecutive 1st-place finishes
+      winStreak: 0,             // consecutive 1st-place finishes on the same track
+      winStreakTrackId: null,   // which track the current streak is on
     },
     classState,
     trackState,
@@ -289,9 +290,13 @@ export class ProgressManager {
     if (!data.stats.recentRacesByClass) {
       data.stats.recentRacesByClass = {};
     }
-    // Ensure win streak field exists (migration from saves without it)
+    // Ensure win streak fields exist (migration from saves without them)
     if (typeof data.stats.winStreak !== 'number') {
       data.stats.winStreak = 0;
+    }
+    if (!('winStreakTrackId' in data.stats)) {
+      data.stats.winStreakTrackId = null;
+      data.stats.winStreak = 0; // reset — old streak had no track context
     }
   }
 
@@ -304,6 +309,8 @@ export class ProgressManager {
   }
 
   get winStreak() {
+    // Only return streak if there's a valid track context; guards against legacy saves
+    if (!this.data.stats.winStreakTrackId) return 0;
     return this.data.stats.winStreak || 0;
   }
 
@@ -425,11 +432,12 @@ export class ProgressManager {
     stats.totalBucksEarned += bucksEarned;
     if (streak > stats.bestStreak) stats.bestStreak = streak;
 
-    // Win streak (consecutive 1st-place finishes)
-    if (position === 1) {
+    // Win streak (consecutive 1st-place finishes on the SAME track)
+    if (position === 1 && trackId && trackId === stats.winStreakTrackId) {
       stats.winStreak = (stats.winStreak || 0) + 1;
     } else {
-      stats.winStreak = 0;
+      stats.winStreak = position === 1 ? 1 : 0;
+      stats.winStreakTrackId = position === 1 ? (trackId || null) : null;
     }
 
     // Track answer speed (global)
