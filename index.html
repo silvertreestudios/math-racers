@@ -15,127 +15,260 @@
       overflow: hidden;
       background: #1a1a2e;
       touch-action: none;
-      /* Account for notches/safe areas */
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-    #game-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      /* Use dvh (dynamic viewport height) where supported, fallback to innerHeight via JS */
-      width: 100vw;
-      height: 100dvh;
-      height: 100vh; /* fallback for older browsers, overridden by JS */
-    }
-    canvas {
-      display: block;
-      touch-action: none;
     }
 
-    /* Portrait overlay — shown when device is in portrait */
-    #rotate-overlay {
-      display: none;
+    #game-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: #1a1a2e;
-      z-index: 9999;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #ffffff;
-      font-family: Arial Black, Arial, sans-serif;
-      text-align: center;
-      padding: 40px;
-    }
-    #rotate-overlay .rotate-icon {
-      font-size: 80px;
-      margin-bottom: 24px;
-      animation: wiggle 1.5s ease-in-out infinite;
-    }
-    #rotate-overlay .rotate-text {
-      font-size: 24px;
-      line-height: 1.4;
-    }
-    @keyframes wiggle {
-      0%, 100% { transform: rotate(-10deg); }
-      50% { transform: rotate(10deg); }
+      transform-origin: top left;
+      /* JS sets transform and size when portrait is detected */
     }
 
-    /* Show overlay in portrait mode */
-    @media (orientation: portrait) {
-      #rotate-overlay {
-        display: flex !important;
-      }
-      #game-container {
-        display: none;
-      }
-    }
-    @media (orientation: landscape) {
-      #rotate-overlay {
-        display: none !important;
-      }
-      #game-container {
-        display: block;
-      }
+    canvas {
+      display: block;
+      touch-action: none;
     }
   </style>
 </head>
 <body>
-  <div id="rotate-overlay">
-    <div class="rotate-icon">📱↔️</div>
-    <div class="rotate-text">Please rotate your device<br>to landscape mode</div>
-  </div>
   <div id="game-container"></div>
   <script type="module" src="/src/main.js"></script>
   <script>
-    // Fix mobile viewport: 100vh includes browser chrome, window.innerHeight doesn't
-    function setRealViewport() {
-      const container = document.getElementById('game-container');
-      container.style.height = window.innerHeight + 'px';
-      container.style.width = window.innerWidth + 'px';
-    }
-    setRealViewport();
-    window.addEventListener('resize', setRealViewport);
-    window.addEventListener('orientationchange', () => setTimeout(setRealViewport, 100));
+    // ── Orientation / viewport management ────────────────────────────────────
+    //
+    // Strategy: always present a landscape viewport to Phaser regardless of how
+    // the device is physically held.
+    //
+    // When the device is in portrait mode we:
+    //  1. Rotate #game-container 90° clockwise via CSS transform.
+    //  2. Give the container the swapped dimensions (visualH × visualW) so it
+    //     fills the screen after rotation.
+    //  3. Intercept pointer/touch events on the canvas and rotate their
+    //     coordinates back 90° so Phaser receives correct landscape coords.
+    //
+    // Phaser uses canvas.getBoundingClientRect() + pageX/pageY for hit-testing,
+    // so we patch event coordinates before they reach Phaser's input manager.
 
-    // Lock orientation to landscape via Fullscreen + Screen Orientation API
-    // Most mobile browsers only allow orientation lock in fullscreen mode
+    let isPortrait = false;
+
+    function applyOrientation() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const container = document.getElementById('game-container');
+
+      isPortrait = vh > vw;
+
+      if (isPortrait) {
+        // Rotate 90° clockwise: the game canvas will appear landscape.
+        // Container must be sized as vh × vw (swapped) then translated so it
+        // stays on-screen after rotation around its top-left corner.
+        //
+        //  transform: rotate(90deg) applied at top-left origin shifts the box
+        //  so we translate it right by vh to keep it in view.
+        container.style.width  = vh + 'px';   // becomes the landscape width
+        container.style.height = vw + 'px';   // becomes the landscape height
+        container.style.transform = `rotate(90deg) translateY(-${vh}px)`;
+        container.style.transformOrigin = '0 0';
+      } else {
+        container.style.width  = vw + 'px';
+        container.style.height = vh + 'px';
+        container.style.transform = '';
+        container.style.transformOrigin = '0 0';
+      }
+
+      // Tell Phaser about the real (possibly rotated) dimensions by firing a
+      // resize — Phaser.Scale.RESIZE picks up window.innerWidth/Height via the
+      // canvas parent's clientWidth/clientHeight.
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    // ── Input coordinate rotation ─────────────────────────────────────────────
+    //
+    // When portrait-rotated, Phaser sees the canvas as portrait-shaped (before
+    // CSS transform). We intercept pointer events in the capture phase and
+    // rewrite clientX/clientY to the equivalent landscape coordinates.
+    //
+    // Mapping (rotate 90° CW, i.e. the transform we applied):
+    //   landscape_x =  portrait_y
+    //   landscape_y = (portrait_width - portrait_x)
+    // where portrait_width = window.innerWidth (the narrow side).
+
+    function rotatePointerEvent(e) {
+      if (!isPortrait) return;  // nothing to do in landscape
+
+      const canvas = document.querySelector('#game-container canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+
+      // Helper to compute rotated coords for a single {clientX, clientY} point
+      function rotatePoint(clientX, clientY) {
+        // Position relative to the top-left of the *physical* screen
+        // In portrait mode the container is rotated 90° clockwise so:
+        //   "portrait" screen dimensions are window.innerWidth (vw) × window.innerHeight (vh)
+        // After the CSS rotate+translate the canvas occupies the full screen in
+        // landscape orientation (vh × vw) as seen by the user.
+        //
+        // The canvas element itself has offsetWidth = vh, offsetHeight = vw
+        // (the swapped dims we assigned), so getBoundingClientRect reports a
+        // portrait-rotated box. We want to remap the raw screen touch point into
+        // the landscape coordinate space Phaser expects.
+        //
+        // Screen (portrait): x ∈ [0, vw], y ∈ [0, vh]
+        // Phaser canvas (after rotate): x ∈ [0, vh], y ∈ [0, vw]
+        //
+        // The rotation is: landscape_x = y_screen, landscape_y = vw - x_screen
+        // (because a 90°-CW rotation maps (x,y) → (y, W-x) for width W)
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        const lx = clientY;
+        const ly = vw - clientX;
+
+        return { clientX: lx, clientY: ly };
+      }
+
+      // We cannot modify read-only properties of native events, so we
+      // re-dispatch a synthetic event with corrected coordinates.  We mark it
+      // with a flag so we don't re-process it.
+      if (e._rotated) return;
+
+      e.stopImmediatePropagation();
+      e.preventDefault();
+
+      const isTouchEvent = e.type.startsWith('touch');
+
+      if (isTouchEvent) {
+        const touches = [];
+        const changedTouches = [];
+        const targetTouches = [];
+
+        function makeTouch(original) {
+          const { clientX, clientY } = rotatePoint(original.clientX, original.clientY);
+          // TouchEvent API: we create a Touch via Touch constructor where supported
+          if (typeof Touch !== 'undefined' && Touch.length > 0) {
+            try {
+              return new Touch({
+                identifier: original.identifier,
+                target: original.target || canvas,
+                clientX, clientY,
+                pageX: clientX,
+                pageY: clientY,
+                screenX: clientX,
+                screenY: clientY,
+                radiusX: original.radiusX || 1,
+                radiusY: original.radiusY || 1,
+                rotationAngle: original.rotationAngle || 0,
+                force: original.force || 1,
+              });
+            } catch (_) { /* fall through */ }
+          }
+          return original; // can't patch, pass through
+        }
+
+        for (const t of Array.from(e.touches || [])) touches.push(makeTouch(t));
+        for (const t of Array.from(e.changedTouches || [])) changedTouches.push(makeTouch(t));
+        for (const t of Array.from(e.targetTouches || [])) targetTouches.push(makeTouch(t));
+
+        let synth;
+        try {
+          synth = new TouchEvent(e.type, {
+            bubbles: e.bubbles,
+            cancelable: e.cancelable,
+            touches,
+            changedTouches,
+            targetTouches,
+            ctrlKey: e.ctrlKey,
+            shiftKey: e.shiftKey,
+            altKey: e.altKey,
+            metaKey: e.metaKey,
+          });
+        } catch (_) {
+          // TouchEvent constructor not available (desktop or older browser) — skip
+          return;
+        }
+        synth._rotated = true;
+        canvas.dispatchEvent(synth);
+      } else {
+        // Mouse / pointer event
+        const { clientX, clientY } = rotatePoint(e.clientX, e.clientY);
+        const EventCtor = e instanceof PointerEvent ? PointerEvent : MouseEvent;
+        const init = {
+          bubbles: e.bubbles,
+          cancelable: e.cancelable,
+          clientX, clientY,
+          pageX: clientX,
+          pageY: clientY,
+          screenX: clientX,
+          screenY: clientY,
+          button: e.button,
+          buttons: e.buttons,
+          pointerId: e.pointerId,
+          pointerType: e.pointerType,
+          width: e.width,
+          height: e.height,
+          pressure: e.pressure,
+          isPrimary: e.isPrimary,
+        };
+        const synth = new EventCtor(e.type, init);
+        synth._rotated = true;
+        canvas.dispatchEvent(synth);
+      }
+    }
+
+    // Attach capturing listeners to intercept events before Phaser sees them
+    const INPUT_EVENTS = [
+      'mousedown', 'mouseup', 'mousemove',
+      'pointerdown', 'pointerup', 'pointermove',
+      'touchstart', 'touchend', 'touchmove', 'touchcancel',
+      'click',
+    ];
+
+    function attachInputInterceptors() {
+      const canvas = document.querySelector('#game-container canvas');
+      if (!canvas) {
+        // Phaser hasn't created the canvas yet — retry shortly
+        setTimeout(attachInputInterceptors, 100);
+        return;
+      }
+      for (const type of INPUT_EVENTS) {
+        canvas.addEventListener(type, rotatePointerEvent, { capture: true, passive: false });
+      }
+    }
+
+    // ── Orientation lock (best-effort) ────────────────────────────────────────
     function lockLandscape() {
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
       }
     }
 
-    // Try immediately (works on some browsers)
-    lockLandscape();
-
-    // On first user interaction, go fullscreen and lock orientation
     function requestFullscreenLock() {
       const el = document.documentElement;
       const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
       if (rfs) {
-        rfs.call(el).then(() => {
-          lockLandscape();
-        }).catch(() => {});
+        rfs.call(el).then(() => lockLandscape()).catch(() => {});
       }
-      // Only do this once
-      document.removeEventListener('click', requestFullscreenLock);
-      document.removeEventListener('touchstart', requestFullscreenLock);
     }
 
-    document.addEventListener('click', requestFullscreenLock, { once: true });
+    document.addEventListener('click',      requestFullscreenLock, { once: true });
     document.addEventListener('touchstart', requestFullscreenLock, { once: true });
-
-    // Re-lock on fullscreen change (in case user exits and re-enters)
     document.addEventListener('fullscreenchange', () => {
       if (document.fullscreenElement) lockLandscape();
     });
+
+    lockLandscape();
+
+    // ── Bootstrap ─────────────────────────────────────────────────────────────
+    applyOrientation();
+    window.addEventListener('resize', applyOrientation);
+    window.addEventListener('orientationchange', () => setTimeout(applyOrientation, 50));
+
+    // Wait for Phaser to create its canvas then hook input
+    attachInputInterceptors();
   </script>
 </body>
 </html>
