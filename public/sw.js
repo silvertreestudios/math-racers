@@ -1,19 +1,21 @@
 /**
  * Math Racers — Service Worker
  *
- * Strategy: cache-first for all same-origin requests.
+ * Strategy: network-first (network falling back to cache).
  *
  * On install:   pre-cache the shell (HTML + manifest + icons).
- * On fetch:     return cached response if available; fall back to network
- *               and add the response to the cache for next time.
+ * On fetch:     try network first; on success update the cache and return the
+ *               response. On network failure, fall back to cache. This means
+ *               users always get the latest deploy when online, but the game
+ *               still works fully offline after the first load.
  * On activate:  delete any caches that don't match CACHE_NAME so old
  *               bundles are cleaned up when the SW version is bumped.
  *
  * Vite hashes JS/CSS filenames, so we can't hard-code them. Instead we
- * cache every successful same-origin GET response on first fetch.
+ * cache every successful same-origin GET response on first successful fetch.
  */
 
-const CACHE_NAME = 'math-racers-v1';
+const CACHE_NAME = 'math-racers-v2';
 
 // Resources to pre-cache on install (shell only — bundle is cached lazily)
 const PRECACHE = [
@@ -55,19 +57,18 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-
-      // Not in cache — fetch from network, cache a clone, return response
-      return fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         // Only cache successful, non-opaque responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+        if (response && response.status === 200 && response.type === 'basic') {
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, toCache));
         }
-        const toCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, toCache));
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        // Network failed — fall back to cache
+        return caches.match(event.request);
+      })
   );
 });

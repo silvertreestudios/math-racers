@@ -118,6 +118,53 @@ export class TitleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
+    // ── Build SHA (upper right, long-press to reset) ───────────────────────
+    // eslint-disable-next-line no-undef
+    const sha = (typeof __BUILD_SHA__ !== 'undefined') ? __BUILD_SHA__ : 'dev';
+    const buildLabel = this.add.text(
+      w - SAFE_PADDING,
+      SAFE_PADDING,
+      `Build: ${sha}`,
+      {
+        fontSize: '11px',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        alpha: 0.5,
+      }
+    ).setOrigin(1, 0).setInteractive({ useHandCursor: false });
+
+    let resetTimer = null;
+    const RESET_HOLD_MS = 5000;
+
+    buildLabel.on('pointerdown', () => {
+      buildLabel.setColor('#ff4444').setAlpha(1);
+      resetTimer = this.time.delayedCall(RESET_HOLD_MS, () => {
+        // Wipe save data
+        const prog = this.registry.get('progress');
+        if (prog) prog.reset();
+
+        // Flash "RESET!" then restart title
+        const flash = this.add.text(cx, cy, 'RESET!', {
+          fontSize: '64px',
+          fontStyle: 'bold',
+          color: '#ff0000',
+          fontFamily: 'Arial Black, Arial',
+          stroke: '#660000',
+          strokeThickness: 6,
+        }).setOrigin(0.5).setDepth(100);
+
+        this.time.delayedCall(800, () => this.scene.restart());
+        this.tweens.add({ targets: flash, alpha: 0, duration: 700, ease: 'Power2' });
+      });
+    });
+
+    const cancelReset = () => {
+      if (resetTimer) { resetTimer.remove(); resetTimer = null; }
+      buildLabel.setColor('#ffffff').setAlpha(0.5);
+    };
+    buildLabel.on('pointerup', cancelReset);
+    buildLabel.on('pointerout', cancelReset);
+
     // ── Animated road scroll ──────────────────────────────────────────────
     this.time.addEvent({
       delay: 16,
