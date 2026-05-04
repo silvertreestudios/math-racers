@@ -110,13 +110,18 @@ export class TitleScene extends Phaser.Scene {
 
     // ── Bucks display ─────────────────────────────────────────────────────
     const progress = this.registry.get('progress');
-    if (progress) {
-      this.add.text(cx, h - SAFE_PADDING - 10, `💵 ${progress.bucks} Bucks`, {
-        fontSize: '22px',
-        color: '#ffdd00',
-        fontFamily: 'Arial',
-      }).setOrigin(0.5);
-    }
+    this._bucksText = this.add.text(cx, h - SAFE_PADDING - 10, `💵 ${progress ? progress.bucks : 0} Bucks`, {
+      fontSize: '22px',
+      color: '#ffdd00',
+      fontFamily: 'Arial',
+    }).setOrigin(0.5);
+
+    // Listen for async IDB recovery — update wallet text if data arrives late
+    this.game.events.once('progressRestored', (data) => {
+      if (this._bucksText && this._bucksText.active) {
+        this._bucksText.setText(`💵 ${data.player.bucks} Bucks`);
+      }
+    });
 
     // ── Build SHA (upper right, long-press to reset) ───────────────────────
     // eslint-disable-next-line no-undef

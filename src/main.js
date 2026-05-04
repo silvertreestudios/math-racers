@@ -28,4 +28,8 @@ const config = {
   },
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Expose the game instance globally so ProgressManager can emit events
+// to active scenes (e.g. after async IDB recovery on first load).
+globalThis.__phaserGame = game;

@@ -129,6 +129,9 @@ export class ProgressManager {
    * Async IDB bootstrap: opens IDB and, if the sync load found no data,
    * recovers from IDB if it has a valid save. The recovered data is then
    * re-saved to localStorage so subsequent loads are fast and synchronous.
+   *
+   * After recovery, emits 'progressRestored' on the global game event bus
+   * (window.__phaserGame.events) so active scenes can refresh their UI.
    */
   _initIDB() {
     this._idbRead()
@@ -155,6 +158,12 @@ export class ProgressManager {
           }
           // Re-save to localStorage so next load is synchronous
           this._save();
+
+          // Notify any active Phaser scene that data has been restored
+          const game = globalThis.__phaserGame;
+          if (game && game.events) {
+            game.events.emit('progressRestored', this.data);
+          }
         }
       })
       .catch(e => console.warn('[PM] IDB: _initIDB failed', e));
