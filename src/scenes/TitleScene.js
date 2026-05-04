@@ -131,6 +131,42 @@ export class TitleScene extends Phaser.Scene {
       }
     });
 
+    // ── Refresh button (upper-left, online only) ──────────────────────────
+    this._refreshBtn = this.add.text(
+      SAFE_PADDING,
+      SAFE_PADDING,
+      '↻ Refresh',
+      {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontFamily: 'Arial',
+        alpha: navigator.onLine ? 0.5 : 0,
+      }
+    ).setOrigin(0, 0).setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-8, -8, 90, 48), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
+
+    this._refreshBtn.setVisible(navigator.onLine);
+
+    this._refreshBtn.on('pointerover', () => this._refreshBtn.setAlpha(0.9));
+    this._refreshBtn.on('pointerout',  () => this._refreshBtn.setAlpha(0.5));
+    this._refreshBtn.on('pointerup', () => {
+      this._refreshBtn.setText('Updating...').setAlpha(1).setColor('#ffdd00');
+      // Unregister service workers, clear caches, then hard reload
+      const doReload = () => { location.href = location.href; };
+      const swPromise = ('serviceWorker' in navigator)
+        ? navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister())))
+        : Promise.resolve();
+      const cachePromise = ('caches' in window)
+        ? caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        : Promise.resolve();
+      Promise.all([swPromise, cachePromise]).then(doReload).catch(doReload);
+    });
+
+    // Show/hide based on connectivity changes
+    this._onOnline  = () => { if (this._refreshBtn?.active) this._refreshBtn.setVisible(true).setAlpha(0.5); };
+    this._onOffline = () => { if (this._refreshBtn?.active) this._refreshBtn.setVisible(false); };
+    window.addEventListener('online',  this._onOnline);
+    window.addEventListener('offline', this._onOffline);
+
     // ── Build SHA (upper right, long-press to reset) ───────────────────────
     // eslint-disable-next-line no-undef
     const sha = (typeof __BUILD_SHA__ !== 'undefined') ? __BUILD_SHA__ : 'dev';
@@ -189,6 +225,11 @@ export class TitleScene extends Phaser.Scene {
         }
       },
     });
+  }
+
+  shutdown() {
+    window.removeEventListener('online',  this._onOnline);
+    window.removeEventListener('offline', this._onOffline);
   }
 
   _drawBackground(w, h) {
