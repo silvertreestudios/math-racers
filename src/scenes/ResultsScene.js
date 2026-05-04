@@ -81,6 +81,15 @@ export class ResultsScene extends Phaser.Scene {
       strokeThickness: 4,
     }).setOrigin(0.5);
 
+    // Personalized subtitle
+    const playerName = progress?.data?.player?.name || 'Racer';
+    const greeting = position === 1 ? `🏆 Amazing, ${playerName}!` : `Great race, ${playerName}!`;
+    this.add.text(cx, y + Math.min(44, w * 0.056) * 0.7, greeting, {
+      fontSize: `${Math.min(22, w * 0.028)}px`,
+      color: position === 1 ? '#ffdd00' : '#ffffff',
+      fontFamily: 'Arial',
+    }).setOrigin(0.5);
+
     y += h * 0.14;
 
     // ── Track name ────────────────────────────────────────────────────────

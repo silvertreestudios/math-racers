@@ -610,6 +610,15 @@ export class RaceScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(21);
     this._progressBarWidth = barWidth;
 
+    // Player name label — left of progress bar
+    const progress = this.registry.get('progress');
+    const playerName = progress?.data?.player?.name || 'You';
+    this.add.text(w / 2 - barWidth / 2 - 8, SAFE_PADDING + 6, playerName, {
+      fontSize: `${Math.min(13, w * 0.016)}px`,
+      color: '#00ff88',
+      fontFamily: 'Arial',
+    }).setOrigin(1, 0.5).setDepth(20);
+
     // Problem counter
     this.counterText = this.add.text(w / 2, SAFE_PADDING + 22, '', {
       fontSize: '13px',
