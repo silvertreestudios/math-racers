@@ -6,6 +6,7 @@ import { ClassSelectScene } from './scenes/ClassSelectScene.js';
 import { TrackSelectScene } from './scenes/TrackSelectScene.js';
 import { RaceScene } from './scenes/RaceScene.js';
 import { ResultsScene } from './scenes/ResultsScene.js';
+import { GarageScene } from './scenes/GarageScene.js';
 import { ProgressManager } from './systems/ProgressManager.js';
 
 // Instantiate global progress manager and share via Phaser registry
@@ -21,7 +22,7 @@ const config = {
     width: '100%',
     height: '100%',
   },
-  scene: [BootScene, NameEntryScene, TitleScene, ClassSelectScene, TrackSelectScene, RaceScene, ResultsScene],
+  scene: [BootScene, NameEntryScene, TitleScene, ClassSelectScene, TrackSelectScene, RaceScene, ResultsScene, GarageScene],
   callbacks: {
     preBoot: (game) => {
       game.registry.set('progress', progress);

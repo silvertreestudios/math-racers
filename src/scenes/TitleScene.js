@@ -116,6 +116,19 @@ export class TitleScene extends Phaser.Scene {
       this.time.delayedCall(320, () => this.scene.start('ClassSelectScene'));
     });
 
+    // ── GARAGE button ─────────────────────────────────────────────────────
+    const garageBtnY = cy + h * 0.42;
+    const garageBg = this.add.rectangle(cx, garageBtnY, 180, 52, 0x334488)
+      .setInteractive({ useHandCursor: true })
+      .setStrokeStyle(3, 0x8899cc);
+    const garageTxt = this.add.text(cx, garageBtnY, '🔧 GARAGE', {
+      fontSize: '24px', fontStyle: 'bold', color: '#ffffff',
+      fontFamily: 'Arial Black, Arial',
+    }).setOrigin(0.5);
+    garageBg.on('pointerover', () => garageBg.setFillStyle(0x4455aa));
+    garageBg.on('pointerout', () => garageBg.setFillStyle(0x334488));
+    garageBg.on('pointerup', () => this.scene.start('GarageScene'));
+
     // ── Bucks display ─────────────────────────────────────────────────────
     const progress = this.registry.get('progress');
     this._bucksText = this.add.text(cx, h - SAFE_PADDING - 10, `💵 ${progress ? progress.bucks : 0} Bucks`, {
