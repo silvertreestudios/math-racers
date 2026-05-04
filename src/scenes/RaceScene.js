@@ -35,6 +35,7 @@ export class RaceScene extends Phaser.Scene {
     this.classConfig = CLASSES[this.classId] || CLASSES['addition'];
 
     this.mathEngine = new MathEngine();
+    this.mathEngine.reset(); // clear repeat-prevention history for this race
 
     // Get per-class stats for AI calibration — falls back to easy defaults
     // on first race in a new class so the player isn't overwhelmed.

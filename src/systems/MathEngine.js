@@ -9,19 +9,68 @@
  */
 
 export class MathEngine {
+  constructor() {
+    /** Tracks the last N problem keys seen this race to avoid repeats. */
+    this._recentKeys = [];
+    this._historySize = 5;
+  }
+
+  /** Call at the start of each race to clear repeat-prevention history. */
+  reset() {
+    this._recentKeys = [];
+  }
+
   /**
    * Generate a single problem for the given track config.
+   * Avoids repeating any of the last 5 problems (same operands + operator).
+   * Bails out after 10 attempts; if still colliding, only guarantees no
+   * back-to-back repeat (prevents the worst case on tiny number ranges).
    * @param {object} trackConfig  Full track object from tracks.js
    * @returns {{ a, b, correct, answers, answerIndex, operator }}
    */
   generateProblem(trackConfig) {
     const op = trackConfig.classId || 'addition';
+    const MAX_TRIES = 10;
 
+    let problem;
+    let lastKey = this._recentKeys[this._recentKeys.length - 1] ?? null;
+
+    for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+      problem = this._generate(op, trackConfig);
+      const key = `${problem.operator}${problem.a}${problem.operator}${problem.b}`;
+
+      // Accept if not in recent history (full dedup window)
+      if (!this._recentKeys.includes(key)) {
+        this._pushKey(key);
+        return problem;
+      }
+
+      // After exhausting attempts, at least avoid exact back-to-back
+      if (attempt === MAX_TRIES - 1 && key !== lastKey) {
+        this._pushKey(key);
+        return problem;
+      }
+    }
+
+    // Absolute fallback — return whatever we last generated
+    const key = `${problem.operator}${problem.a}${problem.operator}${problem.b}`;
+    this._pushKey(key);
+    return problem;
+  }
+
+  _pushKey(key) {
+    this._recentKeys.push(key);
+    if (this._recentKeys.length > this._historySize) {
+      this._recentKeys.shift();
+    }
+  }
+
+  _generate(op, trackConfig) {
     switch (op) {
-      case 'subtraction':   return this._subtraction(trackConfig);
+      case 'subtraction':    return this._subtraction(trackConfig);
       case 'multiplication': return this._multiplication(trackConfig);
-      case 'division':      return this._division(trackConfig);
-      default:              return this._addition(trackConfig);
+      case 'division':       return this._division(trackConfig);
+      default:               return this._addition(trackConfig);
     }
   }
 
