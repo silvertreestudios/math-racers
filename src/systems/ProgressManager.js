@@ -21,8 +21,10 @@ function defaultSave() {
       bestStreak: 0,
       totalBucksEarned: 0,
       recentAnswers: [],
-      avgAnswerTimeMs: null,   // rolling average time per answer in ms
-      totalAnswerTimeMs: 0,    // cumulative answer time for computing avg
+      avgAnswerTimeMs: null,
+      totalAnswerTimeMs: 0,
+      // Windowed stats: last 5 races
+      recentRaces: [],  // [{ correct, answered, avgTimeMs }]
     },
   };
 }
@@ -80,20 +82,40 @@ export class ProgressManager {
       stats.avgAnswerTimeMs = stats.totalAnswerTimeMs / stats.totalAnswered;
     }
 
+    // Windowed recent races (last 5)
+    if (!stats.recentRaces) stats.recentRaces = [];
+    stats.recentRaces.push({
+      correct,
+      answered,
+      avgTimeMs: (totalAnswerTimeMs && answered > 0) ? totalAnswerTimeMs / answered : null,
+    });
+    if (stats.recentRaces.length > 5) {
+      stats.recentRaces = stats.recentRaces.slice(-5);
+    }
+
     this.data.player.bucks += bucksEarned;
     this._save();
   }
 
-  /** Player's historic accuracy (0-1), defaults to 0.8 */
+  /** Player's windowed accuracy (last 5 races), defaults to 0.8 */
   get accuracy() {
-    const s = this.data.stats;
-    if (s.totalAnswered === 0) return 0.8;
-    return s.totalCorrect / s.totalAnswered;
+    const races = this.data.stats.recentRaces || [];
+    if (races.length === 0) return 0.8;
+    let correct = 0, answered = 0;
+    for (const r of races) {
+      correct += r.correct;
+      answered += r.answered;
+    }
+    return answered > 0 ? correct / answered : 0.8;
   }
 
-  /** Player's avg answer time in ms, defaults to null (use fallback) */
+  /** Player's windowed avg answer time (last 5 races), defaults to null */
   get avgAnswerTimeMs() {
-    return this.data.stats.avgAnswerTimeMs || null;
+    const races = this.data.stats.recentRaces || [];
+    const withTime = races.filter(r => r.avgTimeMs != null);
+    if (withTime.length === 0) return null;
+    const sum = withTime.reduce((s, r) => s + r.avgTimeMs, 0);
+    return sum / withTime.length;
   }
 
   reset() {
