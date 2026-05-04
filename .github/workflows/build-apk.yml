@@ -43,14 +43,14 @@ jobs:
           name: math-racers-debug
           path: ${{ env.APK_NAME }}
 
-      - name: Create/Update Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-latest
-          name: "Math Racers APK (Latest)"
-          body: "Auto-built Android APK — build `${{ github.sha }}`.\n\nThis is a WebView wrapper that loads the live site — it auto-updates when new web code is deployed."
+          tag_name: android-${{ github.sha }}
+          name: "Math Racers APK — ${{ env.APK_NAME }}"
+          body: "Auto-built Android APK from commit `${{ github.sha }}`.\n\nThis is a WebView wrapper that loads the live site — it auto-updates when new web code is deployed."
           files: ${{ env.APK_NAME }}
-          prerelease: true
-          make_latest: false
+          prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
