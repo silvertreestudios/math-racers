@@ -5,11 +5,13 @@
 import Phaser from 'phaser';
 import { MathEngine } from '../systems/MathEngine.js';
 import { AIRacer } from '../systems/AIRacer.js';
+import { CLASSES, TRACKS } from '../config/tracks.js';
+import { AI_NAMES_BY_CLASS, CAR_COLORS_BY_CLASS } from '../config/cars.js';
 import {
   SAFE_PADDING,
   PLAYER_BASE_SPEED, CORRECT_BOOST, CORRECT_BOOST_DURATION,
   WRONG_PENALTY, WRONG_PENALTY_DURATION, CORRECT_FLASH_DURATION,
-  AI_SPEEDS, STREAK_NITRO, STREAK_TURBO, STREAK_SUPERCHARGE, STREAK_BOOST,
+  STREAK_NITRO, STREAK_TURBO, STREAK_SUPERCHARGE, STREAK_BOOST,
   FINISH_LINE_X, CAR_COLORS, CAR_NAMES,
   PARALLAX_SPEEDS,
 } from '../config/constants.js';
@@ -19,9 +21,18 @@ export class RaceScene extends Phaser.Scene {
     super({ key: 'RaceScene' });
   }
 
+  init(data) {
+    this.classId = (data && data.classId) || 'addition';
+    this.trackId = (data && data.trackId) || 'starter-speedway';
+  }
+
   create() {
     this.w = this.scale.width;
     this.h = this.scale.height;
+
+    // Resolve track + class config
+    this.trackConfig = TRACKS[this.trackId] || TRACKS['starter-speedway'];
+    this.classConfig = CLASSES[this.classId] || CLASSES['addition'];
 
     this.mathEngine = new MathEngine();
 
@@ -216,9 +227,14 @@ export class RaceScene extends Phaser.Scene {
       h * 0.62,
     ];
 
+    // Use class-specific colors and names
+    const carColors = CAR_COLORS_BY_CLASS[this.classId] || CAR_COLORS;
+    const aiNames = AI_NAMES_BY_CLASS[this.classId] || ['Speedy Sam', 'Turbo Tina', 'Dash Dave'];
+    const carNames = ['YOU', ...aiNames];
+
     for (let i = 0; i < 4; i++) {
       const gfx = this.add.graphics().setDepth(i === 0 ? 5 : 3);
-      const color = CAR_COLORS[i];
+      const color = carColors[i];
       const y = lanes[i];
 
       // Car body
@@ -236,7 +252,7 @@ export class RaceScene extends Phaser.Scene {
       this.carSprites.push({ gfx, baseY: y, index: i });
 
       // Name tag
-      const name = this.add.text(SAFE_PADDING + 40, y - 26, CAR_NAMES[i], {
+      const name = this.add.text(SAFE_PADDING + 40, y - 26, carNames[i], {
         fontSize: '12px',
         color: i === 0 ? '#00ffff' : '#ffffff',
         fontFamily: 'Arial',
@@ -375,9 +391,9 @@ export class RaceScene extends Phaser.Scene {
       return;
     }
 
-    const problem = this.mathEngine.generateProblem({ min: 1, max: 9 });
+    const problem = this.mathEngine.generateProblem(this.trackConfig);
     this.currentProblem = problem;
-    this.problemText.setText(`${problem.a} + ${problem.b} = ?`);
+    this.problemText.setText(`${problem.a} ${problem.operator} ${problem.b} = ?`);
 
     // Set answer button texts
     for (let i = 0; i < 4; i++) {
@@ -531,6 +547,8 @@ export class RaceScene extends Phaser.Scene {
         answered: this.problemsAnswered,
         streak: this.bestStreak,
         totalAnswerTimeMs: this.totalAnswerTimeMs,
+        classId: this.classId,
+        trackId: this.trackId,
       });
     });
   }

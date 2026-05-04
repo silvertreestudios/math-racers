@@ -105,7 +105,7 @@ export class TitleScene extends Phaser.Scene {
     });
     btnBg.on('pointerup', () => {
       this.cameras.main.flash(300, 255, 255, 255);
-      this.time.delayedCall(320, () => this.scene.start('RaceScene'));
+      this.time.delayedCall(320, () => this.scene.start('ClassSelectScene'));
     });
 
     // ── Bucks display ─────────────────────────────────────────────────────

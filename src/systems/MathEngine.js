@@ -1,65 +1,215 @@
 /**
- * MathEngine — generates addition problems with smart distractors.
+ * MathEngine — generates arithmetic problems for all 4 operations.
  *
- * Smart distractor strategies:
- *  - off-by-one: correct ± 1
- *  - wrong-operation: a - b  (or |a - b|)
- *  - nearby-value: correct ± small random (2-4)
- *  - digit-swap: swap tens/units of correct answer
- *  - carry-error: simulate forgetting a carry (subtract 10)
+ * Smart distractor strategies per operation:
+ *  Addition:       off-by-one, wrong-op (sub/mul), nearby, digit-swap, carry-error
+ *  Subtraction:    off-by-one, wrong-op (add/wrong sign), nearby, borrow-error, digit-swap
+ *  Multiplication: off-by-one, wrong-op (add instead), nearby, digit-swap, off-by-factor
+ *  Division:       off-by-one, wrong-op (multiply back), nearby, remainder-confusion
  */
 
 export class MathEngine {
   /**
-   * Generate a single addition problem.
-   * @param {{ min: number, max: number }} range  operand range
-   * @returns {{ a, b, correct, answers, answerIndex }}
+   * Generate a single problem for the given track config.
+   * @param {object} trackConfig  Full track object from tracks.js
+   * @returns {{ a, b, correct, answers, answerIndex, operator }}
    */
-  generateProblem(range = { min: 1, max: 9 }) {
-    const a = this._rand(range.min, range.max);
-    const b = this._rand(range.min, range.max);
+  generateProblem(trackConfig) {
+    const op = trackConfig.classId || 'addition';
+
+    switch (op) {
+      case 'subtraction':   return this._subtraction(trackConfig);
+      case 'multiplication': return this._multiplication(trackConfig);
+      case 'division':      return this._division(trackConfig);
+      default:              return this._addition(trackConfig);
+    }
+  }
+
+  // ─── Operations ──────────────────────────────────────────────────────────
+
+  _addition(track) {
+    const a = this._rand(track.operandA.min, track.operandA.max);
+    const b = this._rand(track.operandB.min, track.operandB.max);
     const correct = a + b;
-
-    const distractors = this._generateDistractors(a, b, correct);
+    const distractors = this._additionDistractors(a, b, correct);
     const answers = this._buildAnswerList(correct, distractors);
-
-    return {
-      a,
-      b,
-      correct,
-      answers,          // array of 4 numbers, shuffled
-      answerIndex: answers.indexOf(correct),
-    };
+    return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '+' };
   }
 
-  // ─── Private helpers ──────────────────────────────────────────────────────
-
-  _rand(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  _subtraction(track) {
+    // Ensure a >= b so answer is positive
+    let a = this._rand(track.operandA.min, track.operandA.max);
+    let b = this._rand(track.operandB.min, track.operandB.max);
+    // Clamp b to be <= a
+    b = Math.min(b, a - 1 > 0 ? a - 1 : a);
+    if (b <= 0) b = 1;
+    if (a <= b) a = b + this._rand(1, 5);
+    const correct = a - b;
+    const distractors = this._subtractionDistractors(a, b, correct);
+    const answers = this._buildAnswerList(correct, distractors);
+    return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '−' };
   }
 
-  _generateDistractors(a, b, correct) {
+  _multiplication(track) {
+    const a = this._rand(track.operandA.min, track.operandA.max);
+    const b = this._rand(track.operandB.min, track.operandB.max);
+    const correct = a * b;
+    const distractors = this._multiplicationDistractors(a, b, correct);
+    const answers = this._buildAnswerList(correct, distractors);
+    return { a, b, correct, answers, answerIndex: answers.indexOf(correct), operator: '×' };
+  }
+
+  _division(track) {
+    // Build clean division: dividend = divisor × quotient (no remainder)
+    const divisor = this._rand(track.divisorRange.min, track.divisorRange.max);
+    const quotient = this._rand(track.quotientRange.min, track.quotientRange.max);
+    const dividend = divisor * quotient;
+    const correct = quotient;
+    const distractors = this._divisionDistractors(dividend, divisor, correct);
+    const answers = this._buildAnswerList(correct, distractors);
+    return { a: dividend, b: divisor, correct, answers, answerIndex: answers.indexOf(correct), operator: '÷' };
+  }
+
+  // ─── Distractor generators ────────────────────────────────────────────────
+
+  _additionDistractors(a, b, correct) {
     const candidates = new Set();
 
     // Off-by-one
     if (correct - 1 > 0) candidates.add(correct - 1);
     candidates.add(correct + 1);
 
-    // Wrong operation: subtraction |a - b|
+    // Wrong operation: subtraction
     const sub = Math.abs(a - b);
     if (sub !== correct && sub > 0) candidates.add(sub);
 
-    // Wrong operation: multiply (can be large but useful for variety)
+    // Wrong operation: multiply (capped so not too wild)
     const mul = a * b;
-    if (mul !== correct && mul > 0 && mul < correct + 20) candidates.add(mul);
+    if (mul !== correct && mul > 0 && mul < correct + 50) candidates.add(mul);
 
-    // Nearby values ±2..4
-    for (let delta = 2; delta <= 4; delta++) {
-      if (correct - delta > 0) candidates.add(correct - delta);
-      candidates.add(correct + delta);
+    // Nearby ±2..4
+    for (let d = 2; d <= 4; d++) {
+      if (correct - d > 0) candidates.add(correct - d);
+      candidates.add(correct + d);
     }
 
-    // Digit swap (e.g., 17 → 71) — only if result is positive and different
+    // Digit swap
+    this._digitSwap(correct, candidates);
+
+    // Carry error: subtract 10
+    if (correct - 10 > 0) candidates.add(correct - 10);
+
+    return this._pickDistractors(candidates, correct, 3);
+  }
+
+  _subtractionDistractors(a, b, correct) {
+    const candidates = new Set();
+
+    // Off-by-one
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+
+    // Wrong direction: a + b
+    const add = a + b;
+    if (add !== correct) candidates.add(add);
+
+    // Borrow error: +10 (forgot to borrow)
+    candidates.add(correct + 10);
+    if (correct - 10 > 0) candidates.add(correct - 10);
+
+    // Digit swap
+    this._digitSwap(correct, candidates);
+
+    // Nearby
+    for (let d = 2; d <= 4; d++) {
+      if (correct - d > 0) candidates.add(correct - d);
+      candidates.add(correct + d);
+    }
+
+    // Swapped operands: b - a style error (if b > correct)
+    if (b > correct && b - correct > 0 && b - correct !== correct) {
+      candidates.add(b - correct > 0 ? b : b + 1);
+    }
+
+    return this._pickDistractors(candidates, correct, 3);
+  }
+
+  _multiplicationDistractors(a, b, correct) {
+    const candidates = new Set();
+
+    // Off-by-one
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+
+    // Wrong operation: addition
+    const add = a + b;
+    if (add !== correct && add > 0) candidates.add(add);
+
+    // Off by one factor: (a-1)*b or a*(b-1)
+    const offA = (a - 1) * b;
+    if (offA > 0 && offA !== correct) candidates.add(offA);
+    const offB = a * (b - 1);
+    if (offB > 0 && offB !== correct) candidates.add(offB);
+    const offAp = (a + 1) * b;
+    if (offAp !== correct) candidates.add(offAp);
+
+    // Digit swap
+    this._digitSwap(correct, candidates);
+
+    // Nearby ±10 for larger numbers, ±2..5 for small
+    const nearbyStep = correct > 50 ? 10 : 3;
+    for (let d = 1; d <= 2; d++) {
+      if (correct - nearbyStep * d > 0) candidates.add(correct - nearbyStep * d);
+      candidates.add(correct + nearbyStep * d);
+    }
+
+    // Partial product error: a * units(b) only
+    const partialB = b % 10;
+    if (partialB > 0) {
+      const partial = a * partialB;
+      if (partial !== correct && partial > 0) candidates.add(partial);
+    }
+
+    return this._pickDistractors(candidates, correct, 3);
+  }
+
+  _divisionDistractors(dividend, divisor, correct) {
+    const candidates = new Set();
+
+    // Off-by-one
+    if (correct - 1 > 0) candidates.add(correct - 1);
+    candidates.add(correct + 1);
+
+    // Wrong op: dividend / (divisor - 1) or +1
+    if (divisor > 1) {
+      const wrongDiv1 = Math.round(dividend / (divisor - 1));
+      if (wrongDiv1 !== correct && wrongDiv1 > 0) candidates.add(wrongDiv1);
+    }
+    const wrongDiv2 = Math.round(dividend / (divisor + 1));
+    if (wrongDiv2 !== correct && wrongDiv2 > 0) candidates.add(wrongDiv2);
+
+    // Multiply back confusion: divisor itself
+    if (divisor !== correct) candidates.add(divisor);
+
+    // Nearby ±2..4
+    for (let d = 2; d <= 4; d++) {
+      if (correct - d > 0) candidates.add(correct - d);
+      candidates.add(correct + d);
+    }
+
+    // Digit swap
+    this._digitSwap(correct, candidates);
+
+    // Off by 10% (remainder confusion)
+    const off10 = Math.round(correct * 1.1);
+    if (off10 !== correct) candidates.add(off10);
+
+    return this._pickDistractors(candidates, correct, 3);
+  }
+
+  // ─── Shared helpers ──────────────────────────────────────────────────────
+
+  _digitSwap(correct, candidates) {
     if (correct >= 10) {
       const tens = Math.floor(correct / 10);
       const units = correct % 10;
@@ -68,20 +218,16 @@ export class MathEngine {
         if (swapped !== correct && swapped > 0) candidates.add(swapped);
       }
     }
+  }
 
-    // Carry error: subtract 10
-    if (correct - 10 > 0) candidates.add(correct - 10);
-
-    // Remove the correct answer itself and anything ≤ 0
+  _pickDistractors(candidates, correct, count) {
     candidates.delete(correct);
     for (const c of candidates) {
-      if (c <= 0) candidates.delete(c);
+      if (c <= 0 || !Number.isFinite(c)) candidates.delete(c);
     }
-
-    // Shuffle and pick 3
     const arr = Array.from(candidates);
     this._shuffle(arr);
-    return arr.slice(0, 3);
+    return arr.slice(0, count);
   }
 
   _buildAnswerList(correct, distractors) {
@@ -97,6 +243,10 @@ export class MathEngine {
     const answers = [correct, ...distractors.slice(0, 3)];
     this._shuffle(answers);
     return answers;
+  }
+
+  _rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
   _shuffle(arr) {
