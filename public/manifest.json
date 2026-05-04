@@ -1,0 +1,26 @@
+{
+  "name": "Math Racers",
+  "short_name": "Math Racers",
+  "description": "Race cars by solving math problems. Earn bucks, unlock classes, beat the AI!",
+  "start_url": "/math-racers/",
+  "scope": "/math-racers/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "categories": ["games", "education", "kids"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
