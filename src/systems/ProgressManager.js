@@ -123,14 +123,24 @@ export class ProgressManager {
   _load() {
     // Try cookies first — they survive Amazon Kids session resets on Silk
     let raw = null;
-    try { raw = this._cookieRead(); } catch { /* cookies unavailable */ }
+    let source = 'default';
+    try {
+      raw = this._cookieRead();
+      if (raw) source = 'cookies';
+    } catch { /* cookies unavailable */ }
 
     // Fall back to localStorage
     if (!raw) {
-      try { raw = localStorage.getItem(STORAGE_KEY); } catch { /* unavailable */ }
+      try {
+        raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) source = 'localStorage';
+      } catch { /* unavailable */ }
     }
 
-    if (!raw) return defaultSave();
+    if (!raw) {
+      console.log('[PM] _load: no saved data found, using default (bucks=0)');
+      return defaultSave();
+    }
 
     try {
       const parsed = JSON.parse(raw);
@@ -141,32 +151,38 @@ export class ProgressManager {
         if (parsed.player && typeof parsed.player.bucks === 'number') {
           fresh.player.bucks = parsed.player.bucks;
         }
+        console.log(`[PM] _load: migrated old schema from ${source}, bucks=${fresh.player.bucks}`);
         return fresh;
       }
       // Ensure all tracks/classes exist (handles new tracks added after save)
       this._ensureKeys(parsed);
+      console.log(`[PM] _load: loaded from ${source}, bucks=${parsed.player.bucks}`);
       return parsed;
     } catch {
+      console.log(`[PM] _load: JSON parse failed from ${source}, using default`);
       return defaultSave();
     }
   }
 
   _save() {
     const json = JSON.stringify(this.data);
+    const bucks = this.data.player.bucks;
 
     // Always write to localStorage
     try {
       localStorage.setItem(STORAGE_KEY, json);
+      console.log(`[PM] _save: localStorage write OK, bucks=${bucks}`);
     } catch (e) {
-      console.warn('ProgressManager: localStorage write failed', e);
+      console.warn(`[PM] _save: localStorage write FAILED, bucks=${bucks}`, e);
     }
 
     // Dual-write to cookies on Silk for persistence across Amazon Kids sessions
     if (this._useCookies) {
       try {
         this._cookieWrite(json);
+        console.log(`[PM] _save: cookie write OK, bucks=${bucks}`);
       } catch (e) {
-        console.warn('ProgressManager: cookie write failed', e);
+        console.warn(`[PM] _save: cookie write FAILED, bucks=${bucks}`, e);
       }
     }
   }
