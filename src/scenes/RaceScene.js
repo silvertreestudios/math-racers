@@ -36,10 +36,11 @@ export class RaceScene extends Phaser.Scene {
 
     this.mathEngine = new MathEngine();
 
-    // Get player historic stats for AI calibration
+    // Get per-class stats for AI calibration — falls back to easy defaults
+    // on first race in a new class so the player isn't overwhelmed.
     const progress = this.registry.get('progress');
-    const playerAccuracy = progress ? progress.accuracy : 0.8;
-    const playerAvgTime = progress ? (progress.avgAnswerTimeMs || 3000) : 3000;
+    const playerAccuracy = progress ? progress.accuracyForClass(this.classId) : 0.7;
+    const playerAvgTime  = progress ? progress.avgAnswerTimeMsForClass(this.classId) : 4000;
 
     this.aiRacers = [
       new AIRacer(0, playerAccuracy, playerAvgTime),

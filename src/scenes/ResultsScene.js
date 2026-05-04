@@ -39,6 +39,7 @@ export class ResultsScene extends Phaser.Scene {
       nextTrackId = progress.recordRace({
         position, correct, answered, streak, bucksEarned, totalAnswerTimeMs,
         trackId: trackId || null,
+        classId: classId || null,
       });
     }
 

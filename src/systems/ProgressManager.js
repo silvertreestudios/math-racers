@@ -44,7 +44,8 @@ function defaultSave() {
       recentAnswers: [],
       avgAnswerTimeMs: null,
       totalAnswerTimeMs: 0,
-      recentRaces: [],  // [{ correct, answered, avgTimeMs }]
+      recentRaces: [],  // global window kept for backward compat
+      recentRacesByClass: {},  // { [classId]: [{ correct, answered, avgTimeMs }] }
     },
     classState,
     trackState,
@@ -96,6 +97,10 @@ export class ProgressManager {
       if (!data.classState[classId]) {
         data.classState[classId] = { unlocked: classId === 'addition' };
       }
+    }
+    // Ensure per-class race history exists (migration from saves without it)
+    if (!data.stats.recentRacesByClass) {
+      data.stats.recentRacesByClass = {};
     }
   }
 
@@ -205,11 +210,11 @@ export class ProgressManager {
 
   /**
    * Record results of a completed race and persist.
-   * @param {{ position, correct, answered, streak, bucksEarned, totalAnswerTimeMs, trackId }} result
+   * @param {{ position, correct, answered, streak, bucksEarned, totalAnswerTimeMs, trackId, classId }} result
    * @returns {string|null} nextTrackId
    */
   recordRace(result) {
-    const { correct, answered, streak, bucksEarned, totalAnswerTimeMs, trackId, position } = result;
+    const { correct, answered, streak, bucksEarned, totalAnswerTimeMs, trackId, position, classId } = result;
     const stats = this.data.stats;
 
     stats.totalRaces += 1;
@@ -218,21 +223,31 @@ export class ProgressManager {
     stats.totalBucksEarned += bucksEarned;
     if (streak > stats.bestStreak) stats.bestStreak = streak;
 
-    // Track answer speed
+    // Track answer speed (global)
     if (totalAnswerTimeMs && answered > 0) {
       stats.totalAnswerTimeMs = (stats.totalAnswerTimeMs || 0) + totalAnswerTimeMs;
       stats.avgAnswerTimeMs = stats.totalAnswerTimeMs / stats.totalAnswered;
     }
 
-    // Windowed recent races (last 5)
-    if (!stats.recentRaces) stats.recentRaces = [];
-    stats.recentRaces.push({
+    const raceEntry = {
       correct,
       answered,
       avgTimeMs: (totalAnswerTimeMs && answered > 0) ? totalAnswerTimeMs / answered : null,
-    });
-    if (stats.recentRaces.length > 5) {
-      stats.recentRaces = stats.recentRaces.slice(-5);
+    };
+
+    // Global windowed window (backward compat)
+    if (!stats.recentRaces) stats.recentRaces = [];
+    stats.recentRaces.push(raceEntry);
+    if (stats.recentRaces.length > 5) stats.recentRaces = stats.recentRaces.slice(-5);
+
+    // Per-class windowed window
+    if (!stats.recentRacesByClass) stats.recentRacesByClass = {};
+    if (classId) {
+      if (!stats.recentRacesByClass[classId]) stats.recentRacesByClass[classId] = [];
+      stats.recentRacesByClass[classId].push(raceEntry);
+      if (stats.recentRacesByClass[classId].length > 5) {
+        stats.recentRacesByClass[classId] = stats.recentRacesByClass[classId].slice(-5);
+      }
     }
 
     this.data.player.bucks += bucksEarned;
@@ -265,6 +280,37 @@ export class ProgressManager {
     const races = this.data.stats.recentRaces || [];
     const withTime = races.filter(r => r.avgTimeMs != null);
     if (withTime.length === 0) return null;
+    const sum = withTime.reduce((s, r) => s + r.avgTimeMs, 0);
+    return sum / withTime.length;
+  }
+
+  /**
+   * Per-class windowed accuracy (last 5 races for this class).
+   * Falls back to 0.7 when no history for the class — deliberately easier
+   * so the first race in a new class feels approachable.
+   * @param {string} classId
+   */
+  accuracyForClass(classId) {
+    const races = (this.data.stats.recentRacesByClass || {})[classId] || [];
+    if (races.length === 0) return 0.7;
+    let correct = 0, answered = 0;
+    for (const r of races) {
+      correct += r.correct;
+      answered += r.answered;
+    }
+    return answered > 0 ? correct / answered : 0.7;
+  }
+
+  /**
+   * Per-class windowed avg answer time (last 5 races for this class).
+   * Falls back to 4000ms when no history — deliberately slower default
+   * so AI isn't tuned too tight on the first race of a new class.
+   * @param {string} classId
+   */
+  avgAnswerTimeMsForClass(classId) {
+    const races = (this.data.stats.recentRacesByClass || {})[classId] || [];
+    const withTime = races.filter(r => r.avgTimeMs != null);
+    if (withTime.length === 0) return 4000;
     const sum = withTime.reduce((s, r) => s + r.avgTimeMs, 0);
     return sum / withTime.length;
   }
