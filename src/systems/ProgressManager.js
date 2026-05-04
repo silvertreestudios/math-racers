@@ -1,11 +1,24 @@
 /**
- * ProgressManager — handles LocalStorage persistence.
- * Saves: bucks balance, stats, class/track unlock state, per-track trophies.
+ * ProgressManager — handles LocalStorage persistence with cookie fallback.
+ *
+ * Storage strategy:
+ *  - Non-Silk browsers: LocalStorage only.
+ *  - Silk browser (Amazon Kids): dual-write to BOTH LocalStorage AND cookies.
+ *    Cookies persist across Silk sessions in Amazon Kids profiles even when
+ *    localStorage is cleared between sessions. Reads prefer cookies.
+ *
+ * Cookie chunking: cookies are limited to ~4096 bytes per cookie. The save
+ * JSON is split into 3500-byte chunks and stored as mathRacersSave_0,
+ * mathRacersSave_1, … A mathRacersSave_n cookie records the chunk count.
  */
 
 import { CLASSES, TRACKS } from '../config/tracks.js';
 
-const STORAGE_KEY = 'mathRacers';
+const STORAGE_KEY  = 'mathRacers';
+const COOKIE_BASE  = 'mathRacersSave';
+const COOKIE_COUNT = 'mathRacersSave_n';
+const COOKIE_CHUNK = 3500;
+const COOKIE_TTL   = 60 * 60 * 24 * 365; // 1 year in seconds
 const SCHEMA_VERSION = 2;
 
 function defaultSave() {
@@ -44,8 +57,8 @@ function defaultSave() {
       recentAnswers: [],
       avgAnswerTimeMs: null,
       totalAnswerTimeMs: 0,
-      recentRaces: [],  // global window kept for backward compat
-      recentRacesByClass: {},  // { [classId]: [{ correct, answered, avgTimeMs }] }
+      recentRaces: [],          // global window kept for backward compat
+      recentRacesByClass: {},   // { [classId]: [{ correct, answered, avgTimeMs }] }
     },
     classState,
     trackState,
@@ -54,13 +67,72 @@ function defaultSave() {
 
 export class ProgressManager {
   constructor() {
+    // Detect Silk browser (Amazon Kindle Fire)
+    this._useCookies = /Silk|SilkBrowser/i.test(
+      (typeof navigator !== 'undefined' ? navigator.userAgent : '')
+    );
     this.data = this._load();
   }
 
+  // ─── Cookie helpers ──────────────────────────────────────────────────────
+
+  _cookieSet(name, value) {
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${COOKIE_TTL}; SameSite=Lax`;
+  }
+
+  _cookieGet(name) {
+    const match = document.cookie.split('; ').find(c => c.startsWith(name + '='));
+    return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
+  }
+
+  _cookieDel(name) {
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+  }
+
+  /** Write JSON string to cookie(s), chunking at COOKIE_CHUNK bytes each. */
+  _cookieWrite(json) {
+    // Clean up old chunks first
+    const oldCount = parseInt(this._cookieGet(COOKIE_COUNT) || '0', 10);
+    for (let i = 0; i < oldCount; i++) this._cookieDel(`${COOKIE_BASE}_${i}`);
+
+    const chunks = [];
+    for (let i = 0; i < json.length; i += COOKIE_CHUNK) {
+      chunks.push(json.slice(i, i + COOKIE_CHUNK));
+    }
+    this._cookieSet(COOKIE_COUNT, String(chunks.length));
+    chunks.forEach((chunk, i) => this._cookieSet(`${COOKIE_BASE}_${i}`, chunk));
+  }
+
+  /** Read and reassemble JSON string from cookie(s). Returns null if absent. */
+  _cookieRead() {
+    const countStr = this._cookieGet(COOKIE_COUNT);
+    if (!countStr) return null;
+    const count = parseInt(countStr, 10);
+    if (!count || count < 1) return null;
+    const parts = [];
+    for (let i = 0; i < count; i++) {
+      const part = this._cookieGet(`${COOKIE_BASE}_${i}`);
+      if (part === null) return null; // missing chunk — treat as corrupt
+      parts.push(part);
+    }
+    return parts.join('');
+  }
+
+  // ─── Load / Save ─────────────────────────────────────────────────────────
+
   _load() {
+    // Try cookies first — they survive Amazon Kids session resets on Silk
+    let raw = null;
+    try { raw = this._cookieRead(); } catch { /* cookies unavailable */ }
+
+    // Fall back to localStorage
+    if (!raw) {
+      try { raw = localStorage.getItem(STORAGE_KEY); } catch { /* unavailable */ }
+    }
+
+    if (!raw) return defaultSave();
+
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultSave();
       const parsed = JSON.parse(raw);
       // Migrate from schema v1 or any older version
       if (parsed.version !== SCHEMA_VERSION) {
@@ -76,6 +148,26 @@ export class ProgressManager {
       return parsed;
     } catch {
       return defaultSave();
+    }
+  }
+
+  _save() {
+    const json = JSON.stringify(this.data);
+
+    // Always write to localStorage
+    try {
+      localStorage.setItem(STORAGE_KEY, json);
+    } catch (e) {
+      console.warn('ProgressManager: localStorage write failed', e);
+    }
+
+    // Dual-write to cookies on Silk for persistence across Amazon Kids sessions
+    if (this._useCookies) {
+      try {
+        this._cookieWrite(json);
+      } catch (e) {
+        console.warn('ProgressManager: cookie write failed', e);
+      }
     }
   }
 
@@ -101,14 +193,6 @@ export class ProgressManager {
     // Ensure per-class race history exists (migration from saves without it)
     if (!data.stats.recentRacesByClass) {
       data.stats.recentRacesByClass = {};
-    }
-  }
-
-  _save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
-    } catch (e) {
-      console.warn('ProgressManager: could not save to localStorage', e);
     }
   }
 
