@@ -69,6 +69,7 @@ function defaultSave() {
       totalAnswerTimeMs: 0,
       recentRaces: [],          // global window kept for backward compat
       recentRacesByClass: {},   // { [classId]: [{ correct, answered, avgTimeMs }] }
+      winStreak: 0,             // consecutive 1st-place finishes
     },
     classState,
     trackState,
@@ -288,6 +289,10 @@ export class ProgressManager {
     if (!data.stats.recentRacesByClass) {
       data.stats.recentRacesByClass = {};
     }
+    // Ensure win streak field exists (migration from saves without it)
+    if (typeof data.stats.winStreak !== 'number') {
+      data.stats.winStreak = 0;
+    }
   }
 
   get bucks() {
@@ -296,6 +301,10 @@ export class ProgressManager {
 
   get stats() {
     return this.data.stats;
+  }
+
+  get winStreak() {
+    return this.data.stats.winStreak || 0;
   }
 
   get isFirstRun() {
@@ -415,6 +424,13 @@ export class ProgressManager {
     stats.totalAnswered += answered;
     stats.totalBucksEarned += bucksEarned;
     if (streak > stats.bestStreak) stats.bestStreak = streak;
+
+    // Win streak (consecutive 1st-place finishes)
+    if (position === 1) {
+      stats.winStreak = (stats.winStreak || 0) + 1;
+    } else {
+      stats.winStreak = 0;
+    }
 
     // Track answer speed (global)
     if (totalAnswerTimeMs && answered > 0) {

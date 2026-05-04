@@ -44,10 +44,19 @@ export class ResultsScene extends Phaser.Scene {
     const accuracyBonus = accuracy === 100 ? Math.round(BUCKS_ACCURACY_BONUS * multiplier) : 0;
     const streakBonus   = streak >= 5      ? Math.round(BUCKS_STREAK_BONUS * multiplier)   : 0;
 
-    const bucksEarned = positionPayout + accuracyBonus + streakBonus;
+    // Win streak bonus — based on consecutive 1st-place finishes BEFORE this race
+    // Formula: (streakLength - 1) * Math.round(firstPlaceBucks / 2)
+    // We read the CURRENT streak before recordRace increments it.
+    const progress = this.registry.get('progress');
+    const prevWinStreak = (position === 1 && progress) ? progress.winStreak : 0;
+    const firstPlaceBucks = Math.round(BUCKS_BY_POSITION[0] * multiplier) + trackBonus;
+    const winStreakBonus  = prevWinStreak > 0
+      ? prevWinStreak * Math.round(firstPlaceBucks / 2)
+      : 0;
+
+    const bucksEarned = positionPayout + accuracyBonus + streakBonus + winStreakBonus;
 
     // Save progress and get next track if unlocked
-    const progress = this.registry.get('progress');
     let nextTrackId = null;
     if (progress) {
       nextTrackId = progress.recordRace({
@@ -119,6 +128,11 @@ export class ResultsScene extends Phaser.Scene {
     const breakdownLines = [`Race finish: 💵 ${positionPayout}`];
     if (accuracyBonus > 0) breakdownLines.push(`Perfect accuracy: 💵 +${accuracyBonus}`);
     if (streakBonus > 0)   breakdownLines.push(`Streak bonus: 💵 +${streakBonus}`);
+    // Win streak bonus line: shows new streak length after this race
+    const newWinStreak = position === 1 ? prevWinStreak + 1 : 0;
+    if (winStreakBonus > 0) {
+      breakdownLines.push(`🔥 Win streak ×${newWinStreak}: 💵 +${winStreakBonus}`);
+    }
 
     for (const line of breakdownLines) {
       this.add.text(cx, y, line, bucksStyle).setOrigin(0.5);
@@ -154,6 +168,19 @@ export class ResultsScene extends Phaser.Scene {
         color: '#44ff88',
         fontFamily: 'Arial',
         stroke: '#004422',
+        strokeThickness: 3,
+      }).setOrigin(0.5);
+    }
+
+    // ── Win streak cue ────────────────────────────────────────────────────
+    if (newWinStreak >= 2) {
+      y += h * 0.045;
+      this.add.text(cx, y, `🔥 ${newWinStreak} wins in a row!`, {
+        fontSize: `${Math.min(20, w * 0.026)}px`,
+        fontStyle: 'bold',
+        color: '#ff8800',
+        fontFamily: 'Arial Black, Arial',
+        stroke: '#331100',
         strokeThickness: 3,
       }).setOrigin(0.5);
     }
