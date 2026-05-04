@@ -13,6 +13,7 @@ export const CLASSES = {
     carType: 'Go-Karts',
     unlockCost: 0,
     color: 0x44cc44,
+    colorCost: 1000,
     bucksMultiplier: 1,
     tracks: [
       'starter-speedway',
@@ -31,6 +32,7 @@ export const CLASSES = {
     carType: 'Rally Cars',
     unlockCost: 1000,
     color: 0x4488ff,
+    colorCost: 2000,
     bucksMultiplier: 1.5,
     tracks: [
       'dusty-trail',
@@ -49,6 +51,7 @@ export const CLASSES = {
     carType: 'Monster Trucks',
     unlockCost: 5000,
     color: 0xffcc00,
+    colorCost: 3000,
     bucksMultiplier: 2,
     tracks: [
       'crusher-circuit',
@@ -67,6 +70,7 @@ export const CLASSES = {
     carType: 'Formula 1',
     unlockCost: 10000,
     color: 0xff4444,
+    colorCost: 4000,
     bucksMultiplier: 3,
     tracks: [
       'grand-straightaway',
@@ -85,6 +89,7 @@ export const CLASSES = {
     carType: 'Supercars',
     unlockCost: 20000,
     color: 0xcc44ff,
+    colorCost: 5000,
     bucksMultiplier: 4,
     tracks: [
       'power-circuit',

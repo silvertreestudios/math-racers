@@ -10,7 +10,7 @@ const additionAttachments = [
     id: 'racing-stripe',
     name: 'Racing Stripe',
     classId: 'addition',
-    cost: 10000,
+    cost: 500,
     draw(g, c) {
       g.fillStyle(0xffffff, 0.6);
       g.fillRect(-26, -3, 52, 4);
@@ -20,7 +20,7 @@ const additionAttachments = [
     id: 'flame-decal',
     name: 'Flame Decal',
     classId: 'addition',
-    cost: 10000,
+    cost: 800,
     draw(g, c) {
       g.fillStyle(0xff6600, 0.85);
       g.fillTriangle(-20, 9, -14, -2, -10, 9);
@@ -34,7 +34,7 @@ const additionAttachments = [
     id: 'rear-spoiler',
     name: 'Rear Spoiler',
     classId: 'addition',
-    cost: 10000,
+    cost: 1000,
     draw(g, c) {
       g.fillStyle(0xaaaaaa);
       g.fillRect(-26, -22, 2, 6);  // left support
@@ -46,7 +46,7 @@ const additionAttachments = [
     id: 'rocket-exhaust',
     name: 'Rocket Exhaust',
     classId: 'addition',
-    cost: 10000,
+    cost: 1500,
     draw(g, c) {
       g.fillStyle(0xff4400, 0.9);
       g.fillTriangle(-30, -1, -48, 0, -30, 5);
@@ -58,7 +58,7 @@ const additionAttachments = [
     id: 'crown',
     name: 'Crown',
     classId: 'addition',
-    cost: 10000,
+    cost: 2000,
     draw(g, c) {
       g.fillStyle(0xffdd00);
       // crown base bar
@@ -78,7 +78,7 @@ const additionAttachments = [
     id: 'star-antenna',
     name: 'Star Antenna',
     classId: 'addition',
-    cost: 10000,
+    cost: 500,
     draw(g, c) {
       g.lineStyle(2, 0xcccccc);
       g.lineBetween(5, -14, 5, -26);
@@ -93,7 +93,7 @@ const additionAttachments = [
     id: 'googly-eyes',
     name: 'Googly Eyes',
     classId: 'addition',
-    cost: 10000,
+    cost: 800,
     draw(g, c) {
       g.fillStyle(0xffffff);
       g.fillCircle(28, -3, 4);
@@ -107,7 +107,7 @@ const additionAttachments = [
     id: 'rainbow-trail',
     name: 'Rainbow Trail',
     classId: 'addition',
-    cost: 10000,
+    cost: 2500,
     draw(g, c) {
       const colors = [0xff0000, 0xff8800, 0xffff00, 0x00cc00, 0x0066ff];
       for (let i = 0; i < colors.length; i++) {
@@ -120,7 +120,7 @@ const additionAttachments = [
     id: 'turbo-fan',
     name: 'Turbo Fan',
     classId: 'addition',
-    cost: 10000,
+    cost: 1500,
     draw(g, c) {
       g.lineStyle(2, 0x888888);
       g.strokeCircle(-28, 0, 6);
@@ -134,7 +134,7 @@ const additionAttachments = [
     id: 'rubber-ducky',
     name: 'Rubber Ducky',
     classId: 'addition',
-    cost: 10000,
+    cost: 3000,
     draw(g, c) {
       g.fillStyle(0xffee00);
       g.fillRoundedRect(-9, -24, 10, 7, 3);  // duck body
@@ -155,7 +155,7 @@ const subtractionAttachments = [
     id: 'mud-flaps-big',
     name: 'Big Mud Flaps',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 1000,
     draw(g, c) {
       g.fillStyle(0x111111);
       g.fillRect(-28, 10, 6, 12);
@@ -166,7 +166,7 @@ const subtractionAttachments = [
     id: 'roof-rack',
     name: 'Roof Rack',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 1500,
     draw(g, c) {
       g.lineStyle(2, 0x888888);
       g.strokeRect(-14, -26, 26, 5);
@@ -180,7 +180,7 @@ const subtractionAttachments = [
     id: 'bull-bar',
     name: 'Bull Bar',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 2000,
     draw(g, c) {
       g.lineStyle(3, 0x888888);
       g.strokeRoundedRect(25, -10, 8, 18, 3);
@@ -191,7 +191,7 @@ const subtractionAttachments = [
     id: 'rally-lights',
     name: 'Rally Lights',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 2500,
     draw(g, c) {
       g.fillStyle(0xffffaa, 0.95);
       g.fillCircle(-8, -24, 4);
@@ -207,7 +207,7 @@ const subtractionAttachments = [
     id: 'racing-numbers',
     name: 'Racing Numbers',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 1000,
     draw(g, c) {
       // "0" as rect outline
       g.lineStyle(2, 0xffffff);
@@ -221,7 +221,7 @@ const subtractionAttachments = [
     id: 'antenna-flag',
     name: 'Antenna Flag',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 1500,
     draw(g, c) {
       g.lineStyle(2, 0xaaaaaa);
       g.lineBetween(20, -20, 20, -32);
@@ -233,7 +233,7 @@ const subtractionAttachments = [
     id: 'snorkel',
     name: 'Snorkel',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 3000,
     draw(g, c) {
       g.fillStyle(0x666666);
       g.fillRect(22, -36, 5, 18);
@@ -247,7 +247,7 @@ const subtractionAttachments = [
     id: 'spare-tire',
     name: 'Spare Tire',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 2000,
     draw(g, c) {
       g.lineStyle(4, 0x333333);
       g.strokeCircle(-30, -10, 7);
@@ -259,7 +259,7 @@ const subtractionAttachments = [
     id: 'camo-paint',
     name: 'Camo Paint',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.fillStyle(0x2d4a1e, 0.5);
       g.fillRect(-20, -8, 10, 8);
@@ -274,7 +274,7 @@ const subtractionAttachments = [
     id: 'cat-ears',
     name: 'Cat Ears',
     classId: 'subtraction',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.fillStyle(0xffaacc);
       g.fillTriangle(-12, -20, -8, -30, -4, -20);
@@ -293,7 +293,7 @@ const multiplicationAttachments = [
     id: 'smoke-stacks',
     name: 'Smoke Stacks',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 2000,
     draw(g, c) {
       g.fillStyle(0x666666);
       g.fillRect(0, -44, 5, 14);
@@ -311,7 +311,7 @@ const multiplicationAttachments = [
     id: 'skull-hood',
     name: 'Skull Hood',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 3000,
     draw(g, c) {
       g.fillStyle(0xeeeeee);
       g.fillEllipse(16, -16, 14, 12);  // skull head
@@ -329,7 +329,7 @@ const multiplicationAttachments = [
     id: 'chain-wheels',
     name: 'Chain Wheels',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.lineStyle(3, 0x888888);
       g.strokeCircle(-18, 12, 16);
@@ -343,7 +343,7 @@ const multiplicationAttachments = [
     id: 'lightning-bolts-decal',
     name: 'Lightning Bolts',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 2500,
     draw(g, c) {
       g.fillStyle(0xffee00, 0.9);
       g.fillTriangle(-8, -20, -3, -20, -6, -12);
@@ -356,7 +356,7 @@ const multiplicationAttachments = [
     id: 'fire-wheels',
     name: 'Fire Wheels',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.lineStyle(3, 0xff6600, 0.8);
       g.strokeCircle(-18, 12, 16);
@@ -370,7 +370,7 @@ const multiplicationAttachments = [
     id: 'viking-horns',
     name: 'Viking Horns',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 6000,
     draw(g, c) {
       g.fillStyle(0xeeeecc);
       // left horn
@@ -386,7 +386,7 @@ const multiplicationAttachments = [
     id: 'spiked-bumper',
     name: 'Spiked Bumper',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 3500,
     draw(g, c) {
       g.fillStyle(0x888888);
       for (let i = 0; i < 5; i++) {
@@ -400,7 +400,7 @@ const multiplicationAttachments = [
     id: 'monster-eyes',
     name: 'Monster Eyes',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 2000,
     draw(g, c) {
       g.fillStyle(0xffffff);
       g.fillRect(-12, -26, 8, 5);
@@ -414,7 +414,7 @@ const multiplicationAttachments = [
     id: 'mohawk',
     name: 'Mohawk',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 4500,
     draw(g, c) {
       g.fillStyle(0xff2244);
       for (let i = 0; i < 5; i++) {
@@ -427,7 +427,7 @@ const multiplicationAttachments = [
     id: 'bat-wings',
     name: 'Bat Wings',
     classId: 'multiplication',
-    cost: 10000,
+    cost: 8000,
     draw(g, c) {
       g.fillStyle(0x221133, 0.9);
       // left wing
@@ -447,7 +447,7 @@ const divisionAttachments = [
     id: 'shark-fin',
     name: 'Shark Fin',
     classId: 'division',
-    cost: 10000,
+    cost: 3000,
     draw(g, c) {
       g.fillStyle(0x333333);
       g.fillTriangle(-6, -8, -6, -48, 2, -8);
@@ -457,7 +457,7 @@ const divisionAttachments = [
     id: 'halo-ring',
     name: 'Halo Ring',
     classId: 'division',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.lineStyle(3, 0xddaa00);
       g.strokeEllipse(0, -20, 24, 8);
@@ -467,7 +467,7 @@ const divisionAttachments = [
     id: 'sponsor-stickers',
     name: 'Sponsor Stickers',
     classId: 'division',
-    cost: 10000,
+    cost: 3000,
     draw(g, c) {
       g.fillStyle(0xff2222);
       g.fillRect(-20, -3, 10, 5);
@@ -481,7 +481,7 @@ const divisionAttachments = [
     id: 'drs-wing',
     name: 'DRS Wing',
     classId: 'division',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.fillStyle(0x555555);
       g.fillRect(-38, -26, 22, 3);
@@ -495,7 +495,7 @@ const divisionAttachments = [
     id: 'led-strip',
     name: 'LED Strip',
     classId: 'division',
-    cost: 10000,
+    cost: 6000,
     draw(g, c) {
       g.fillStyle(0x00ffff, 0.8);
       g.fillRect(-28, 6, 58, 2);
@@ -505,7 +505,7 @@ const divisionAttachments = [
     id: 'gold-rims',
     name: 'Gold Rims',
     classId: 'division',
-    cost: 10000,
+    cost: 7000,
     draw(g, c) {
       g.fillStyle(0xffcc00);
       g.fillCircle(-18, 8, 4);
@@ -519,7 +519,7 @@ const divisionAttachments = [
     id: 'jet-engine',
     name: 'Jet Engine',
     classId: 'division',
-    cost: 10000,
+    cost: 8000,
     draw(g, c) {
       g.fillStyle(0x777777);
       g.fillRoundedRect(-44, -4, 14, 10, 3);
@@ -531,7 +531,7 @@ const divisionAttachments = [
     id: 'laser-antenna',
     name: 'Laser Antenna',
     classId: 'division',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.lineStyle(1, 0xdddddd);
       g.lineBetween(0, -9, 0, -52);
@@ -543,7 +543,7 @@ const divisionAttachments = [
     id: 'aero-canards',
     name: 'Aero Canards',
     classId: 'division',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.fillStyle(0x444444);
       g.fillRect(32, -7, 10, 3);
@@ -576,7 +576,7 @@ const advancedAttachments = [
     id: 'carbon-fiber',
     name: 'Carbon Fiber',
     classId: 'advanced',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.lineStyle(1, 0x000000, 0.3);
       for (let x = -28; x <= 28; x += 8) {
@@ -591,7 +591,7 @@ const advancedAttachments = [
     id: 'neon-underglow',
     name: 'Neon Underglow',
     classId: 'advanced',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.fillStyle(0x00ffcc, 0.75);
       g.fillRect(-30, 8, 60, 3);
@@ -601,7 +601,7 @@ const advancedAttachments = [
     id: 'extra-diffuser',
     name: 'Extra Diffuser',
     classId: 'advanced',
-    cost: 10000,
+    cost: 4000,
     draw(g, c) {
       g.fillStyle(0x222222);
       g.fillTriangle(-36, 8, -24, 8, -30, 18);
@@ -613,7 +613,7 @@ const advancedAttachments = [
     id: 'side-scoops',
     name: 'Side Scoops',
     classId: 'advanced',
-    cost: 10000,
+    cost: 5000,
     draw(g, c) {
       g.fillStyle(0x111111);
       g.fillTriangle(-26, -4, -14, -4, -26, 2);
@@ -624,7 +624,7 @@ const advancedAttachments = [
     id: 'digital-camo',
     name: 'Digital Camo',
     classId: 'advanced',
-    cost: 10000,
+    cost: 7000,
     draw(g, c) {
       const shades = [0x333333, 0x555555, 0x222222, 0x444444];
       const blocks = [
@@ -642,7 +642,7 @@ const advancedAttachments = [
     id: 'diamond-grille',
     name: 'Diamond Grille',
     classId: 'advanced',
-    cost: 10000,
+    cost: 8000,
     draw(g, c) {
       g.fillStyle(0xaaaaaa, 0.6);
       const positions = [
@@ -670,7 +670,7 @@ const advancedAttachments = [
     id: 'flame-thrower',
     name: 'Flame Thrower',
     classId: 'advanced',
-    cost: 10000,
+    cost: 12000,
     draw(g, c) {
       g.fillStyle(0xff4400, 0.9);
       g.fillTriangle(-22, 10, -40, 12, -22, 16);
@@ -684,7 +684,7 @@ const advancedAttachments = [
     id: 'angel-wings',
     name: 'Angel Wings',
     classId: 'advanced',
-    cost: 10000,
+    cost: 12000,
     draw(g, c) {
       g.fillStyle(0xffffff, 0.85);
       // left wing
@@ -705,7 +705,7 @@ const advancedAttachments = [
     id: 'party-hat',
     name: 'Party Hat',
     classId: 'advanced',
-    cost: 10000,
+    cost: 15000,
     draw(g, c) {
       g.fillStyle(0xff44cc);
       g.fillTriangle(-8, -14, 0, -36, 8, -14);

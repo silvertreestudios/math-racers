@@ -19,6 +19,7 @@
  */
 
 import { CLASSES, TRACKS } from '../config/tracks.js';
+import { ATTACHMENTS } from '../config/attachments.js';
 
 const STORAGE_KEY  = 'mathRacers';
 const COOKIE_BASE  = 'mathRacersSave';
@@ -552,8 +553,10 @@ export class ProgressManager {
   }
 
   purchaseColor(classId, color) {
-    if (this.data.player.bucks < 10000) return false;
-    this.data.player.bucks -= 10000;
+    const cls = CLASSES[classId];
+    const cost = cls ? (cls.colorCost || 10000) : 10000;
+    if (this.data.player.bucks < cost) return false;
+    this.data.player.bucks -= cost;
     if (!this.data.garage[classId]) {
       this.data.garage[classId] = { color: null, ownedAttachments: [], equipped: [] };
     }
@@ -563,11 +566,13 @@ export class ProgressManager {
   }
 
   purchaseAttachment(classId, attachmentId) {
-    if (this.data.player.bucks < 10000) return false;
+    // Find the attachment definition to get its cost
+    const attachDef = ATTACHMENTS.find(a => a.id === attachmentId);
+    const cost = attachDef ? attachDef.cost : 10000;
+    if (this.data.player.bucks < cost) return false;
     const g = this.data.garage[classId];
-    if (!g) return false;
-    if (g.ownedAttachments.includes(attachmentId)) return false; // already owned
-    this.data.player.bucks -= 10000;
+    if (!g || g.ownedAttachments.includes(attachmentId)) return false;
+    this.data.player.bucks -= cost;
     g.ownedAttachments.push(attachmentId);
     this._save();
     return true;
