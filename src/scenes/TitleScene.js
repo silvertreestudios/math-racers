@@ -198,7 +198,7 @@ export class TitleScene extends Phaser.Scene {
     let resetTimer = null;
     const RESET_HOLD_MS = 5000;
 
-    // Cheat code: 10 rapid taps on build SHA → unlock all
+    // Cheat code: 10 rapid taps on build SHA → open CheatScene
     let cheatTaps = 0;
     let cheatResetTimer = null;
     const CHEAT_TAPS_NEEDED = 10;
@@ -242,17 +242,7 @@ export class TitleScene extends Phaser.Scene {
       if (cheatTaps >= CHEAT_TAPS_NEEDED) {
         cheatTaps = 0;
         if (cheatResetTimer) { cheatResetTimer.remove(); cheatResetTimer = null; }
-        const prog = this.registry.get('progress');
-        if (prog) prog.unlockAll();
-        const unlockFlash = this.add.text(cx, cy, '🔓 ALL UNLOCKED!', {
-          fontSize: `${Math.min(42, w * 0.054)}px`,
-          fontStyle: 'bold',
-          color: '#ffd700',
-          fontFamily: 'Arial Black, Arial',
-          stroke: '#664400',
-          strokeThickness: 5,
-        }).setOrigin(0.5).setDepth(100);
-        this.tweens.add({ targets: unlockFlash, alpha: 0, duration: 1500, ease: 'Power2' });
+        this.scene.start('CheatScene');
       }
     });
 
