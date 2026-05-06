@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Math Racers — Visual Car Test</title>
+  <style>
+    body { margin: 0; background: #0a0a1e; font-family: Arial, sans-serif; color: #fff; }
+    h1 { text-align: center; padding: 16px 16px 4px; font-size: 20px; color: #ffdd00; margin: 0; }
+    p.hint { text-align: center; color: #8888aa; font-size: 12px; margin: 4px 0 12px; }
+    #game-container { display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <h1>🏎️ Math Racers — Car &amp; Attachment Visual Test</h1>
+  <p class="hint">
+    5 classes × 11 renders (bare + 10 attachments each) = 55 cells at 3× scale.<br>
+    Served via <code>npm run dev</code> — open <code>http://localhost:3000/test/visual-test.html</code>
+  </p>
+  <div id="game-container"></div>
+
+  <script type="module">
+    // Vite resolves bare specifiers during dev
+    import Phaser from 'phaser';
+    import { CAR_DRAW_FN } from '../src/systems/CarRenderer.js';
+    import { ATTACHMENTS_BY_CLASS } from '../src/config/attachments.js';
+    import { CAR_COLORS_BY_CLASS } from '../src/config/cars.js';
+
+    const CLASS_ORDER = ['addition', 'subtraction', 'multiplication', 'division', 'advanced'];
+    const CLASS_LABELS = {
+      addition:       'Go-Kart',
+      subtraction:    'Rally Car',
+      multiplication: 'Monster Truck',
+      division:       'Formula 1',
+      advanced:       'Supercar',
+    };
+
+    const CELL    = 120;   // cell size in px
+    const SCALE   = 3;     // car render scale
+    const COLS    = 11;    // bare + 10 attachments
+    const ROWS    = CLASS_ORDER.length;
+    const LABEL_H = 24;    // label below each cell
+    const PAD     = 6;
+
+    const W = COLS * (CELL + PAD) + PAD;
+    const H = ROWS * (CELL + LABEL_H + PAD) + PAD;
+
+    class RenderScene extends Phaser.Scene {
+      constructor() { super({ key: 'RenderScene' }); }
+
+      create() {
+        for (let row = 0; row < ROWS; row++) {
+          const classId = CLASS_ORDER[row];
+          const color   = CAR_COLORS_BY_CLASS[classId]?.[0] ?? 0x00cccc;
+          const drawFn  = CAR_DRAW_FN[classId];
+          const attachments = ATTACHMENTS_BY_CLASS[classId] || [];
+
+          for (let col = 0; col < COLS; col++) {
+            const attachment = col === 0 ? null : (attachments[col - 1] ?? null);
+
+            const cellX = PAD + col * (CELL + PAD);
+            const cellY = PAD + row * (CELL + LABEL_H + PAD);
+
+            // Cell background + border
+            const bg = this.add.graphics();
+            bg.fillStyle(0x1a1a2e);
+            bg.fillRect(cellX, cellY, CELL, CELL);
+            bg.lineStyle(1, 0x334466, 1);
+            bg.strokeRect(cellX, cellY, CELL, CELL);
+
+            // Car + attachment in a scaled container
+            const cx = cellX + CELL / 2;
+            const cy = cellY + CELL / 2;
+            const container = this.add.container(cx, cy);
+            const gfx = this.add.graphics();
+
+            if (drawFn) {
+              try { drawFn(gfx, color, true); } catch (e) { /* guard */ }
+            }
+            if (attachment) {
+              try { attachment.draw(gfx, color); } catch (e) { /* guard */ }
+            }
+
+            container.add(gfx);
+            container.setScale(SCALE);
+
+            // Label
+            const label = col === 0
+              ? `${CLASS_LABELS[classId]}\n(bare)`
+              : `${attachment?.emoji ?? ''} ${attachment?.id ?? '?'}`;
+
+            this.add.text(cx, cellY + CELL + 2, label, {
+              fontSize: '8px',
+              color: col === 0 ? '#88aaff' : '#cccccc',
+              fontFamily: 'Arial',
+              align: 'center',
+              wordWrap: { width: CELL - 4 },
+            }).setOrigin(0.5, 0);
+          }
+        }
+      }
+    }
+
+    new Phaser.Game({
+      type: Phaser.CANVAS,
+      width: W,
+      height: H,
+      backgroundColor: '#0a0a1e',
+      parent: 'game-container',
+      audio: { noAudio: true },
+      input: { mouse: false, touch: false, keyboard: false },
+      scene: [RenderScene],
+    });
+  </script>
+</body>
+</html>
