@@ -39,11 +39,16 @@ const additionAttachments = [
     classId: 'addition',
     cost: 1000,
     draw(g, c) {
-      // Sits just above rear of kart body (rear is ~x=-28, top of body ~y=-8)
-      g.fillStyle(0xaaaaaa);
-      g.fillRect(-28, -14, 2, 5);  // left support post
-      g.fillRect(-22, -14, 2, 5);  // right support post
-      g.fillRect(-32, -16, 18, 3); // horizontal blade
+      // Mini F1-style rear wing: two uprights on the rear of the kart body,
+      // topped by a wide horizontal airfoil blade.
+      // Kart body rear edge ~x=-26, body top ~y=-7
+      g.fillStyle(0x999999);
+      g.fillRect(-25, -7, 3, 8);   // left upright (connects to rear body)
+      g.fillRect(-15, -7, 3, 8);   // right upright
+      g.fillStyle(0xcccccc);
+      g.fillRect(-28, -10, 20, 4); // wide horizontal blade above uprights
+      g.fillStyle(0x777777);
+      g.fillRect(-28, -7, 20, 2);  // blade underside shadow
     },
   },
   {
@@ -118,10 +123,19 @@ const additionAttachments = [
     classId: 'addition',
     cost: 2500,
     draw(g, c) {
-      const colors = [0xff0000, 0xff8800, 0xffff00, 0x00cc00, 0x0066ff];
-      for (let i = 0; i < colors.length; i++) {
-        g.fillStyle(colors[i], 0.7);
-        g.fillRect(-34 - i * 5, -3 + i, 4, 3 - i * 0.4);
+      // Horizontal colored streaks extending behind the rear of the kart.
+      // Kart rear is ~x=-26. Streaks go left (negative x), tapering in length.
+      const bands = [
+        { color: 0xff2200, y: -5, len: 20 },
+        { color: 0xff8800, y: -2, len: 22 },
+        { color: 0xffee00, y:  1, len: 22 },
+        { color: 0x00cc44, y:  4, len: 20 },
+        { color: 0x2288ff, y:  7, len: 18 },
+        { color: 0xaa44ff, y: 10, len: 15 },
+      ];
+      for (const { color, y, len } of bands) {
+        g.fillStyle(color, 0.8);
+        g.fillRect(-26 - len, y, len, 3);
       }
     },
   },
@@ -433,14 +447,23 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 6000,
     draw(g, c) {
-      g.fillStyle(0xeeeecc);
-      // left horn
-      g.fillTriangle(-20, -28, -30, -44, -14, -30);
-      // right horn
-      g.fillTriangle(20, -28, 14, -30, 30, -44);
-      g.fillStyle(0xccccaa);
-      g.fillTriangle(-20, -28, -26, -40, -16, -30);
-      g.fillTriangle(20, -28, 16, -30, 26, -40);
+      // Large curved horns sweeping outward and up from top corners of truck body.
+      // Truck body top is ~y=-24, corners at ~x=±18. Use bone/tan for contrast.
+      g.fillStyle(0xddcc88);
+      // Left horn: sweeps outward-left and up
+      g.fillTriangle(-18, -26, -38, -44, -24, -26);
+      g.fillTriangle(-38, -44, -34, -28, -18, -26);
+      // Right horn: mirrors
+      g.fillTriangle(18, -26, 38, -44, 24, -26);
+      g.fillTriangle(38, -44, 34, -28, 18, -26);
+      // Darker shading on inner face
+      g.fillStyle(0xbbaa66);
+      g.fillTriangle(-18, -26, -34, -42, -26, -26);
+      g.fillTriangle(18, -26, 34, -42, 26, -26);
+      // Base caps where horns meet the roof
+      g.fillStyle(0xccbb77);
+      g.fillCircle(-21, -26, 5);
+      g.fillCircle(21, -26, 5);
     },
   },
   {
