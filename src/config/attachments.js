@@ -39,10 +39,11 @@ const additionAttachments = [
     classId: 'addition',
     cost: 1000,
     draw(g, c) {
+      // Sits just above rear of kart body (rear is ~x=-28, top of body ~y=-8)
       g.fillStyle(0xaaaaaa);
-      g.fillRect(-26, -22, 2, 6);  // left support
-      g.fillRect(-20, -22, 2, 6);  // right support
-      g.fillRect(-30, -24, 16, 3); // blade
+      g.fillRect(-28, -14, 2, 5);  // left support post
+      g.fillRect(-22, -14, 2, 5);  // right support post
+      g.fillRect(-32, -16, 18, 3); // horizontal blade
     },
   },
   {
@@ -180,12 +181,19 @@ const subtractionAttachments = [
     classId: 'subtraction',
     cost: 1500,
     draw(g, c) {
+      // Rally car roof is roughly x:-16..16, y:-20..-14 area
+      // Draw a rectangular frame sitting ON the roof
+      g.lineStyle(3, 0x999999);
+      g.strokeRect(-14, -24, 28, 6);  // outer frame
+      // cross-bars
       g.lineStyle(2, 0x888888);
-      g.strokeRect(-14, -26, 26, 5);
-      // pegs
-      for (let x = -10; x <= 8; x += 6) {
-        g.lineBetween(x, -26, x, -30);
-      }
+      g.lineBetween(-7, -24, -7, -18);
+      g.lineBetween(0, -24, 0, -18);
+      g.lineBetween(7, -24, 7, -18);
+      // mounting feet connecting to roofline
+      g.lineStyle(2, 0x777777);
+      g.lineBetween(-14, -18, -16, -15);
+      g.lineBetween(14, -18, 16, -15);
     },
   },
   {
@@ -252,12 +260,17 @@ const subtractionAttachments = [
     classId: 'subtraction',
     cost: 3000,
     draw(g, c) {
-      g.fillStyle(0x666666);
-      g.fillRect(22, -36, 5, 18);
-      g.lineStyle(3, 0x888888);
-      g.beginPath();
-      g.arc(24, -36, 4, Math.PI, 0, false);
-      g.strokePath();
+      // Thick vertical pipe on the side, rising above roofline
+      g.fillStyle(0x555555);
+      g.fillRect(20, -32, 7, 22);  // main vertical pipe (thick)
+      // Elbow/cap at top
+      g.fillStyle(0x444444);
+      g.fillRect(14, -34, 13, 7);  // horizontal elbow section
+      // Opening cap circle
+      g.fillStyle(0x333333);
+      g.fillCircle(20, -34, 5);
+      g.fillStyle(0x111111);
+      g.fillCircle(20, -34, 3);    // dark opening
     },
   },
   {
@@ -354,12 +367,22 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 4000,
     draw(g, c) {
-      g.lineStyle(3, 0x888888);
-      g.strokeCircle(-18, 12, 16);
-      g.strokeCircle(18, 12, 16);
-      g.lineStyle(2, 0x666666);
-      g.strokeCircle(-18, 12, 12);
-      g.strokeCircle(18, 12, 12);
+      // Monster truck wheels are at roughly (±18, 12) radius ~14
+      // Draw chain links as small silver circles around each wheel
+      const centers = [[-18, 12], [18, 12]];
+      for (const [cx, cy] of centers) {
+        const r = 16;
+        const linkCount = 12;
+        for (let i = 0; i < linkCount; i++) {
+          const angle = (i / linkCount) * Math.PI * 2;
+          const lx = cx + Math.cos(angle) * r;
+          const ly = cy + Math.sin(angle) * r;
+          g.fillStyle(0x999999);
+          g.fillRect(lx - 2, ly - 2, 5, 3);   // horizontal link
+          g.fillStyle(0x777777);
+          g.fillRect(lx - 1, ly - 3, 3, 5);   // vertical link overlap
+        }
+      }
     },
   },
   {
@@ -383,12 +406,24 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 5000,
     draw(g, c) {
-      g.lineStyle(3, 0xff6600, 0.8);
-      g.strokeCircle(-18, 12, 16);
-      g.strokeCircle(18, 12, 16);
-      g.lineStyle(2, 0xffcc00, 0.6);
-      g.strokeCircle(-18, 12, 18);
-      g.strokeCircle(18, 12, 18);
+      // Flame accents around wheels — small flame spikes, NOT giant rings
+      // Monster truck wheels at (±18, 12), radius ~14
+      const centers = [[-18, 12], [18, 12]];
+      for (const [cx, cy] of centers) {
+        const r = 14;
+        const spikeCount = 8;
+        for (let i = 0; i < spikeCount; i++) {
+          const angle = (i / spikeCount) * Math.PI * 2;
+          const sx = cx + Math.cos(angle) * r;
+          const sy = cy + Math.sin(angle) * r;
+          const tx = cx + Math.cos(angle) * (r + 5);
+          const ty = cy + Math.sin(angle) * (r + 5);
+          const lx = cx + Math.cos(angle + 0.3) * (r + 2);
+          const ly = cy + Math.sin(angle + 0.3) * (r + 2);
+          g.fillStyle(i % 2 === 0 ? 0xff6600 : 0xffcc00, 0.9);
+          g.fillTriangle(sx, sy, tx, ty, lx, ly);
+        }
+      }
     },
   },
   {
@@ -430,12 +465,24 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 2000,
     draw(g, c) {
+      // Two large angry eyes on the windshield area of the monster truck
+      // Windshield is roughly front (right side, x:10..30) upper area y:-20..-30
+      // White sclera
       g.fillStyle(0xffffff);
-      g.fillRect(-12, -26, 8, 5);
-      g.fillRect(2, -26, 8, 5);
+      g.fillEllipse(4, -22, 14, 10);   // left eye
+      g.fillEllipse(20, -22, 14, 10);  // right eye
+      // Red iris
       g.fillStyle(0xff0000);
-      g.fillRect(-10, -26, 4, 5);
-      g.fillRect(4, -26, 4, 5);
+      g.fillEllipse(4, -22, 8, 8);
+      g.fillEllipse(20, -22, 8, 8);
+      // Black pupil
+      g.fillStyle(0x000000);
+      g.fillCircle(4, -22, 3);
+      g.fillCircle(20, -22, 3);
+      // Angry slanted brows
+      g.lineStyle(3, 0x330000);
+      g.lineBetween(-3, -28, 10, -25);   // left brow (angry slant)
+      g.lineBetween(13, -25, 27, -28);   // right brow (angry slant)
     },
   },
   {
@@ -459,13 +506,28 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 8000,
     draw(g, c) {
-      g.fillStyle(0x221133, 0.9);
+      // Use dark purple with visible outline so wings show against dark bg
+      g.fillStyle(0x441166, 1.0);
       // left wing
       g.fillTriangle(-22, -10, -50, -30, -22, -24);
       g.fillTriangle(-50, -30, -44, -14, -22, -10);
       // right wing
       g.fillTriangle(22, -10, 50, -30, 22, -24);
       g.fillTriangle(50, -30, 44, -14, 22, -10);
+      // bright outline to make wings visible
+      g.lineStyle(2, 0xaa44ff, 0.9);
+      g.lineBetween(-22, -10, -50, -30);
+      g.lineBetween(-50, -30, -44, -14);
+      g.lineBetween(-44, -14, -22, -10);
+      g.lineBetween(22, -10, 50, -30);
+      g.lineBetween(50, -30, 44, -14);
+      g.lineBetween(44, -14, 22, -10);
+      // wing membrane ribs
+      g.lineStyle(1, 0x9933dd, 0.7);
+      g.lineBetween(-22, -10, -46, -22);
+      g.lineBetween(-22, -10, -40, -28);
+      g.lineBetween(22, -10, 46, -22);
+      g.lineBetween(22, -10, 40, -28);
     },
   },
 ];
