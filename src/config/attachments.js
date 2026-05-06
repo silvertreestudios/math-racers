@@ -28,15 +28,24 @@ const additionAttachments = [
     classId: 'addition',
     cost: 800,
     draw(g, c) {
-      // Flames on the REAR (left side) of the kart, pointing backward (leftward)
-      g.fillStyle(0xff6600, 0.9);
-      g.fillTriangle(-26, 7, -38, 0, -26, -3);
-      g.fillTriangle(-26, 2, -34, -4, -26, -7);
-      g.fillStyle(0xffdd00, 0.9);
-      g.fillTriangle(-26, 6, -34, 1, -26, -2);
-      g.fillTriangle(-26, 1, -30, -3, -26, -6);
-      g.fillStyle(0xffffff, 0.5);
-      g.fillTriangle(-26, 5, -30, 2, -26, -1);
+      // Hot-rod flame DECAL painted ON the car body surface (x:-26..+26, y:-7..+9).
+      // Flames start near the front (right) and sweep backward (left) along the body.
+      // All coordinates stay within the body rectangle.
+      // Outer orange flames — large sweeping licks
+      g.fillStyle(0xff4400, 0.85);
+      g.fillTriangle( 20,  9,  10, -6,   0,  9);
+      g.fillTriangle(  6,  9,  -2, -4, -12,  9);
+      g.fillTriangle(-10,  9, -18, -3, -26,  9);
+      // Mid yellow layer — slightly smaller
+      g.fillStyle(0xff9900, 0.85);
+      g.fillTriangle( 18,  9,  10, -3,   2,  9);
+      g.fillTriangle(  4,  9,  -2, -1, -10,  9);
+      g.fillTriangle(-12,  9, -18,  0, -24,  9);
+      // Hot core — bright yellow
+      g.fillStyle(0xffee00, 0.8);
+      g.fillTriangle( 16,  9,  10,  0,   4,  9);
+      g.fillTriangle(  2,  9,  -2,  2,  -8,  9);
+      g.fillTriangle(-13,  9, -18,  2, -22,  9);
     },
   },
   {
@@ -83,20 +92,18 @@ const additionAttachments = [
     classId: 'addition',
     cost: 2000,
     draw(g, c) {
-      // Helmet center is at roughly x=8, y=-13 for go-kart
-      // Crown sits directly ON TOP of the helmet
+      // Helmet center x=-2, y=-13. Crown centered on x=-2, sitting on top (y=-22).
+      // Crown spans x=-10..+6 (16px wide), center at x=-2.
       g.fillStyle(0xffdd00);
-      // crown base bar sitting on the helmet
-      g.fillRect(0, -22, 16, 4);
-      // three pointed peaks
-      g.fillTriangle(0, -22, 2, -30, 5, -22);
-      g.fillTriangle(6, -22, 8, -30, 10, -22);
-      g.fillTriangle(11, -22, 14, -30, 16, -22);
+      g.fillRect(-10, -22, 16, 4);          // base bar
+      g.fillTriangle(-10, -22, -8, -30, -5, -22);  // left peak
+      g.fillTriangle( -4, -22, -2, -30,  0, -22);  // center peak
+      g.fillTriangle(  1, -22,  4, -30,  6, -22);  // right peak
       // gems
       g.fillStyle(0xff2244);
-      g.fillCircle(2, -24, 2);
-      g.fillCircle(8, -24, 2);
-      g.fillCircle(14, -24, 2);
+      g.fillCircle(-8, -24, 2);
+      g.fillCircle(-2, -24, 2);
+      g.fillCircle( 4, -24, 2);
     },
   },
   {
@@ -122,16 +129,16 @@ const additionAttachments = [
     classId: 'addition',
     cost: 800,
     draw(g, c) {
-      // Front/nose of go-kart is at x=+36. Two eyes on the front face.
+      // ONE large cyclops eye centered on the front/nose of the go-kart.
+      // Nose area: x≈+28..+36, centered at y=0.
       g.fillStyle(0xffffff);
-      g.fillCircle(28, -5, 6);
-      g.fillCircle(28, 5, 6);
-      g.fillStyle(0x222222);
-      g.fillCircle(30, -5, 3);
-      g.fillCircle(30, 5, 3);
-      g.fillStyle(0xffffff);
-      g.fillCircle(31, -6, 1.5);
-      g.fillCircle(31, 4, 1.5);
+      g.fillCircle(30, 0, 9);      // large white sclera
+      g.fillStyle(0x4488ff);
+      g.fillCircle(30, 0, 6);      // blue iris
+      g.fillStyle(0x111111);
+      g.fillCircle(30, 0, 3.5);    // black pupil
+      g.fillStyle(0xffffff, 0.8);
+      g.fillCircle(32, -2, 1.5);   // catchlight highlight
     },
   },
   {
