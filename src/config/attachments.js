@@ -13,8 +13,12 @@ const additionAttachments = [
     classId: 'addition',
     cost: 500,
     draw(g, c) {
-      g.fillStyle(0xffffff, 0.6);
-      g.fillRect(-26, -3, 52, 4);
+      // Bold dual stripes across the body — dark color contrasts with any base color
+      g.fillStyle(0x000000, 0.55);
+      g.fillRect(-26, -4, 52, 3);
+      g.fillRect(-26, 2, 52, 3);
+      g.fillStyle(0xffffff, 0.7);
+      g.fillRect(-26, -1, 52, 3);
     },
   },
   {
@@ -24,12 +28,15 @@ const additionAttachments = [
     classId: 'addition',
     cost: 800,
     draw(g, c) {
-      g.fillStyle(0xff6600, 0.85);
-      g.fillTriangle(-20, 9, -14, -2, -10, 9);
-      g.fillTriangle(-10, 9, -4, -4, 0, 9);
-      g.fillStyle(0xffdd00, 0.85);
-      g.fillTriangle(-18, 9, -13, 0, -9, 9);
-      g.fillTriangle(-8, 9, -3, -2, 1, 9);
+      // Flames on the REAR (left side) of the kart, pointing backward (leftward)
+      g.fillStyle(0xff6600, 0.9);
+      g.fillTriangle(-26, 7, -38, 0, -26, -3);
+      g.fillTriangle(-26, 2, -34, -4, -26, -7);
+      g.fillStyle(0xffdd00, 0.9);
+      g.fillTriangle(-26, 6, -34, 1, -26, -2);
+      g.fillTriangle(-26, 1, -30, -3, -26, -6);
+      g.fillStyle(0xffffff, 0.5);
+      g.fillTriangle(-26, 5, -30, 2, -26, -1);
     },
   },
   {
@@ -58,10 +65,15 @@ const additionAttachments = [
     classId: 'addition',
     cost: 1500,
     draw(g, c) {
-      g.fillStyle(0xff4400, 0.9);
-      g.fillTriangle(-30, -1, -48, 0, -30, 5);
-      g.fillStyle(0xffcc00, 0.7);
-      g.fillTriangle(-30, 0, -42, 0, -30, 4);
+      // Big dramatic flame cone shooting left from rear of kart (rear ~x=-30)
+      g.fillStyle(0xff2200, 1.0);
+      g.fillTriangle(-30, -5, -62, 1, -30, 7);   // outer flame
+      g.fillStyle(0xff8800, 0.95);
+      g.fillTriangle(-30, -3, -52, 1, -30, 5);   // mid flame
+      g.fillStyle(0xffee00, 0.9);
+      g.fillTriangle(-30, -1, -44, 1, -30, 3);   // inner hot core
+      g.fillStyle(0xffffff, 0.6);
+      g.fillTriangle(-30, 0, -38, 1, -30, 2);    // white-hot tip
     },
   },
   {
@@ -71,18 +83,20 @@ const additionAttachments = [
     classId: 'addition',
     cost: 2000,
     draw(g, c) {
+      // Helmet center is at roughly x=8, y=-13 for go-kart
+      // Crown sits directly ON TOP of the helmet
       g.fillStyle(0xffdd00);
-      // crown base bar
-      g.fillRect(-8, -26, 16, 4);
-      // three points
-      g.fillTriangle(-8, -26, -6, -34, -4, -26);
-      g.fillTriangle(-1, -26, 0, -34, 1, -26);
-      g.fillTriangle(4, -26, 6, -34, 8, -26);
+      // crown base bar sitting on the helmet
+      g.fillRect(0, -22, 16, 4);
+      // three pointed peaks
+      g.fillTriangle(0, -22, 2, -30, 5, -22);
+      g.fillTriangle(6, -22, 8, -30, 10, -22);
+      g.fillTriangle(11, -22, 14, -30, 16, -22);
       // gems
       g.fillStyle(0xff2244);
-      g.fillCircle(-6, -28, 2);
-      g.fillCircle(0, -28, 2);
-      g.fillCircle(6, -28, 2);
+      g.fillCircle(2, -24, 2);
+      g.fillCircle(8, -24, 2);
+      g.fillCircle(14, -24, 2);
     },
   },
   {
@@ -108,12 +122,16 @@ const additionAttachments = [
     classId: 'addition',
     cost: 800,
     draw(g, c) {
+      // Front/nose of go-kart is at x=+36. Two eyes on the front face.
       g.fillStyle(0xffffff);
-      g.fillCircle(28, -3, 4);
-      g.fillCircle(30, 3, 4);
+      g.fillCircle(28, -5, 6);
+      g.fillCircle(28, 5, 6);
       g.fillStyle(0x222222);
-      g.fillCircle(29, -3, 2);
-      g.fillCircle(31, 3, 2);
+      g.fillCircle(30, -5, 3);
+      g.fillCircle(30, 5, 3);
+      g.fillStyle(0xffffff);
+      g.fillCircle(31, -6, 1.5);
+      g.fillCircle(31, 4, 1.5);
     },
   },
   {
@@ -343,16 +361,22 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 2000,
     draw(g, c) {
-      g.fillStyle(0x666666);
-      g.fillRect(0, -44, 5, 14);
-      g.fillRect(8, -44, 5, 14);
+      // Monster truck body top is ~y=-28, cab area center x~0
+      // Tall pipes rising well above the roof
+      g.fillStyle(0x555555);
+      g.fillRect(-6, -50, 7, 24);   // left stack
+      g.fillRect(4, -50, 7, 24);    // right stack
+      // Flared opening at top
+      g.fillStyle(0x333333);
+      g.fillRect(-8, -52, 11, 4);
+      g.fillRect(2, -52, 11, 4);
       // smoke puffs
-      g.fillStyle(0xbbbbbb, 0.5);
-      g.fillCircle(2, -46, 4);
-      g.fillCircle(11, -48, 5);
-      g.fillStyle(0xdddddd, 0.3);
-      g.fillCircle(4, -52, 5);
-      g.fillCircle(13, -54, 6);
+      g.fillStyle(0xcccccc, 0.6);
+      g.fillCircle(-2, -56, 5);
+      g.fillCircle(8, -58, 6);
+      g.fillStyle(0xdddddd, 0.35);
+      g.fillCircle(0, -63, 6);
+      g.fillCircle(10, -65, 7);
     },
   },
   {
@@ -381,20 +405,30 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 4000,
     draw(g, c) {
-      // Monster truck wheels are at roughly (±18, 12) radius ~14
-      // Draw chain links as small silver circles around each wheel
+      // Monster truck wheels at (±18, 12), radius ~14.
+      // Draw a ring of alternating rectangular chain links around each wheel.
+      // Use a slightly larger radius (17) so links sit ON the tyre, not inside.
       const centers = [[-18, 12], [18, 12]];
-      for (const [cx, cy] of centers) {
-        const r = 16;
-        const linkCount = 12;
+      for (const [wx, wy] of centers) {
+        const linkCount = 10;
         for (let i = 0; i < linkCount; i++) {
           const angle = (i / linkCount) * Math.PI * 2;
-          const lx = cx + Math.cos(angle) * r;
-          const ly = cy + Math.sin(angle) * r;
-          g.fillStyle(0x999999);
-          g.fillRect(lx - 2, ly - 2, 5, 3);   // horizontal link
-          g.fillStyle(0x777777);
-          g.fillRect(lx - 1, ly - 3, 3, 5);   // vertical link overlap
+          const lx = wx + Math.cos(angle) * 17;
+          const ly = wy + Math.sin(angle) * 17;
+          // Rotate each link to be tangent to the wheel
+          const tx = -Math.sin(angle);
+          const ty =  Math.cos(angle);
+          const hw = 3, hh = 1.5; // half-width, half-height
+          // 4 corners of the rotated rect
+          const pts = [
+            [lx + tx * hw - ty * hh, ly + ty * hw + tx * hh],
+            [lx - tx * hw - ty * hh, ly - ty * hw + tx * hh],
+            [lx - tx * hw + ty * hh, ly - ty * hw - tx * hh],
+            [lx + tx * hw + ty * hh, ly + ty * hw - tx * hh],
+          ];
+          g.fillStyle(i % 2 === 0 ? 0xaaaaaa : 0x777777);
+          g.fillTriangle(pts[0][0], pts[0][1], pts[1][0], pts[1][1], pts[2][0], pts[2][1]);
+          g.fillTriangle(pts[0][0], pts[0][1], pts[2][0], pts[2][1], pts[3][0], pts[3][1]);
         }
       }
     },
@@ -406,11 +440,21 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 2500,
     draw(g, c) {
-      g.fillStyle(0xffee00, 0.9);
-      g.fillTriangle(-8, -20, -3, -20, -6, -12);
-      g.fillTriangle(-6, -12, -1, -12, -4, -4);
-      g.fillTriangle(2, -20, 7, -20, 4, -12);
-      g.fillTriangle(4, -12, 9, -12, 6, -4);
+      // Black-outlined white lightning bolts on the truck door panels.
+      // Truck body spans x:-22..+22, y:-24..0. Place one bolt each side.
+      // Each bolt: wide top → narrow middle → wide tip (classic zig-zag)
+      const drawBolt = (x) => {
+        // Black outline (drawn first, slightly larger)
+        g.fillStyle(0x000000);
+        g.fillTriangle(x - 5, -22, x + 5, -22, x + 1, -13);
+        g.fillTriangle(x - 3, -13, x + 7, -13, x - 1,  -4);
+        // White fill
+        g.fillStyle(0xffffff);
+        g.fillTriangle(x - 4, -22, x + 4, -22, x + 0, -14);
+        g.fillTriangle(x - 2, -14, x + 6, -14, x - 2,  -5);
+      };
+      drawBolt(-10);
+      drawBolt(8);
     },
   },
   {
@@ -420,22 +464,26 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 5000,
     draw(g, c) {
-      // Flame accents around wheels — small flame spikes, NOT giant rings
-      // Monster truck wheels at (±18, 12), radius ~14
+      // Flame spikes radiating outward from each wheel's circumference.
+      // Monster truck wheels at (±18, 12), radius 14.
+      // Each spike: base point on wheel rim, tip 6px further out.
       const centers = [[-18, 12], [18, 12]];
-      for (const [cx, cy] of centers) {
-        const r = 14;
+      for (const [wx, wy] of centers) {
         const spikeCount = 8;
         for (let i = 0; i < spikeCount; i++) {
-          const angle = (i / spikeCount) * Math.PI * 2;
-          const sx = cx + Math.cos(angle) * r;
-          const sy = cy + Math.sin(angle) * r;
-          const tx = cx + Math.cos(angle) * (r + 5);
-          const ty = cy + Math.sin(angle) * (r + 5);
-          const lx = cx + Math.cos(angle + 0.3) * (r + 2);
-          const ly = cy + Math.sin(angle + 0.3) * (r + 2);
-          g.fillStyle(i % 2 === 0 ? 0xff6600 : 0xffcc00, 0.9);
-          g.fillTriangle(sx, sy, tx, ty, lx, ly);
+          const a = (i / spikeCount) * Math.PI * 2;
+          const aLeft  = a - 0.25;
+          const aRight = a + 0.25;
+          // Base: two points on the rim at ±0.25 rad from spike direction
+          const b1x = wx + Math.cos(aLeft)  * 14;
+          const b1y = wy + Math.sin(aLeft)  * 14;
+          const b2x = wx + Math.cos(aRight) * 14;
+          const b2y = wy + Math.sin(aRight) * 14;
+          // Tip: one point further out
+          const tx = wx + Math.cos(a) * 21;
+          const ty = wy + Math.sin(a) * 21;
+          g.fillStyle(i % 2 === 0 ? 0xff4400 : 0xffaa00, 1.0);
+          g.fillTriangle(b1x, b1y, b2x, b2y, tx, ty);
         }
       }
     },
@@ -473,11 +521,15 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 3500,
     draw(g, c) {
+      // Monster truck front bumper is at x=+22 (right side), spikes point RIGHT
+      g.fillStyle(0x999999);
+      // Bumper bar
+      g.fillRect(20, -20, 4, 22);
+      // Spikes pointing forward (right)
       g.fillStyle(0x888888);
-      for (let i = 0; i < 5; i++) {
-        const bx = 22;
-        const by = -18 + i * 7;
-        g.fillTriangle(bx, by + 1, bx + 8, by + 3, bx, by + 5);
+      for (let i = 0; i < 4; i++) {
+        const by = -17 + i * 6;
+        g.fillTriangle(24, by, 34, by + 3, 24, by + 5);
       }
     },
   },
@@ -529,28 +581,28 @@ const multiplicationAttachments = [
     classId: 'multiplication',
     cost: 8000,
     draw(g, c) {
-      // Use dark purple with visible outline so wings show against dark bg
-      g.fillStyle(0x441166, 1.0);
-      // left wing
-      g.fillTriangle(-22, -10, -50, -30, -22, -24);
-      g.fillTriangle(-50, -30, -44, -14, -22, -10);
+      // Large bat wings extending from the sides — bright purple fill with outline
+      g.fillStyle(0x8800cc, 1.0);
+      // left wing — sweeps out left and up
+      g.fillTriangle(-22, -8, -54, -34, -22, -26);
+      g.fillTriangle(-54, -34, -48, -10, -22, -8);
       // right wing
-      g.fillTriangle(22, -10, 50, -30, 22, -24);
-      g.fillTriangle(50, -30, 44, -14, 22, -10);
-      // bright outline to make wings visible
-      g.lineStyle(2, 0xaa44ff, 0.9);
-      g.lineBetween(-22, -10, -50, -30);
-      g.lineBetween(-50, -30, -44, -14);
-      g.lineBetween(-44, -14, -22, -10);
-      g.lineBetween(22, -10, 50, -30);
-      g.lineBetween(50, -30, 44, -14);
-      g.lineBetween(44, -14, 22, -10);
-      // wing membrane ribs
-      g.lineStyle(1, 0x9933dd, 0.7);
-      g.lineBetween(-22, -10, -46, -22);
-      g.lineBetween(-22, -10, -40, -28);
-      g.lineBetween(22, -10, 46, -22);
-      g.lineBetween(22, -10, 40, -28);
+      g.fillTriangle(22, -8, 54, -34, 22, -26);
+      g.fillTriangle(54, -34, 48, -10, 22, -8);
+      // bright magenta outline so wings pop
+      g.lineStyle(2, 0xee44ff, 1.0);
+      g.lineBetween(-22, -8, -54, -34);
+      g.lineBetween(-54, -34, -48, -10);
+      g.lineBetween(-48, -10, -22, -8);
+      g.lineBetween(22, -8, 54, -34);
+      g.lineBetween(54, -34, 48, -10);
+      g.lineBetween(48, -10, 22, -8);
+      // wing ribs
+      g.lineStyle(1, 0xcc66ff, 0.8);
+      g.lineBetween(-22, -8, -50, -20);
+      g.lineBetween(-22, -8, -42, -32);
+      g.lineBetween(22, -8, 50, -20);
+      g.lineBetween(22, -8, 42, -32);
     },
   },
 ];
@@ -602,12 +654,22 @@ const divisionAttachments = [
     classId: 'division',
     cost: 5000,
     draw(g, c) {
-      g.fillStyle(0x555555);
-      g.fillRect(-38, -26, 22, 3);
-      g.fillRect(-38, -30, 22, 3);
-      g.fillStyle(0x333333);
-      g.fillRect(-36, -30, 2, 4);
-      g.fillRect(-18, -30, 2, 4);
+      // Wider, taller rear wing than the car's built-in one.
+      // F1 built-in rear wing is at x=-36..-22, y=-20..-16.
+      // Draw a bigger wing overlapping/extending that position in bright color.
+      // Endplates — bright white so they contrast against the red car
+      g.fillStyle(0xdddddd);
+      g.fillRect(-40, -30, 5, 22);   // left endplate
+      g.fillRect(-22, -30, 5, 22);   // right endplate
+      // Upper blade (wider span)
+      g.fillStyle(0xcccccc);
+      g.fillRect(-40, -30, 23, 5);
+      // Lower blade
+      g.fillStyle(0xaaaaaa);
+      g.fillRect(-40, -23, 23, 4);
+      // Blue DRS gap highlight
+      g.fillStyle(0x6699ff, 0.8);
+      g.fillRect(-40, -26, 23, 3);
     },
   },
   {
@@ -643,10 +705,19 @@ const divisionAttachments = [
     classId: 'division',
     cost: 8000,
     draw(g, c) {
-      g.fillStyle(0x777777);
-      g.fillRoundedRect(-44, -4, 14, 10, 3);
-      g.fillStyle(0xff6600, 0.7);
-      g.fillCircle(-44, 1, 4);
+      // Jet engine pod mounted below/behind the F1 rear.
+      // F1 rear is at x ~ -28, body bottom ~y=+8. Mount jet here.
+      g.fillStyle(0x888888);
+      g.fillRoundedRect(-42, 2, 18, 9, 3);    // engine pod cylinder
+      g.fillStyle(0x555555);
+      g.fillRect(-44, 4, 4, 5);               // nozzle opening
+      // Exhaust flame cone
+      g.fillStyle(0xff5500, 1.0);
+      g.fillTriangle(-44, 4, -56, 6, -44, 9); // outer flame
+      g.fillStyle(0xffcc00, 0.9);
+      g.fillTriangle(-44, 5, -51, 6, -44, 8); // inner flame
+      g.fillStyle(0xffffff, 0.6);
+      g.fillTriangle(-44, 6, -47, 6, -44, 7); // white tip
     },
   },
   {
@@ -669,13 +740,19 @@ const divisionAttachments = [
     classId: 'division',
     cost: 5000,
     draw(g, c) {
-      g.fillStyle(0x444444);
-      g.fillRect(32, -7, 10, 3);
-      g.fillRect(32, 2, 10, 3);
-      // angle them slightly
-      g.fillStyle(0x555555);
-      g.fillRect(40, -9, 4, 3);
-      g.fillRect(40, 0, 4, 3);
+      // Aero canard winglets on the nose of the F1 car, extending up and down.
+      // Shifted to x=+18..+36 to stay clearly on-canvas at 4× scale.
+      // Dark backing for contrast against red car body.
+      g.fillStyle(0x000000, 0.6);
+      g.fillRect(16, -15, 22, 7);   // upper canard backing
+      g.fillRect(16,  6,  22, 7);   // lower canard backing
+      // Bright white canard surfaces
+      g.fillStyle(0xffffff);
+      g.fillRect(17, -14, 18, 5);   // upper canard
+      g.fillRect(17,   7, 18, 5);   // lower canard
+      // Angled swept-back tips
+      g.fillTriangle(35, -14, 40, -11, 35, -9);   // upper tip
+      g.fillTriangle(35,   7, 40,   9, 35, 12);   // lower tip
     },
   },
   {
@@ -704,12 +781,15 @@ const advancedAttachments = [
     classId: 'advanced',
     cost: 4000,
     draw(g, c) {
-      g.lineStyle(1, 0x000000, 0.3);
-      for (let x = -28; x <= 28; x += 8) {
-        g.lineBetween(x, -6, x, 8);
-      }
-      for (let y = -6; y <= 8; y += 6) {
-        g.lineBetween(-28, y, 28, y);
+      // Dark checkerboard pattern overlaid on the car body — high enough contrast to see
+      g.fillStyle(0x000000, 0.55);
+      // Alternating filled squares in a grid
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 8; col++) {
+          if ((row + col) % 2 === 0) {
+            g.fillRect(-28 + col * 7, -6 + row * 5, 7, 5);
+          }
+        }
       }
     },
   },
@@ -731,10 +811,16 @@ const advancedAttachments = [
     classId: 'advanced',
     cost: 4000,
     draw(g, c) {
-      g.fillStyle(0x222222);
-      g.fillTriangle(-36, 8, -24, 8, -30, 18);
-      g.fillTriangle(-24, 8, -14, 8, -19, 16);
-      g.fillTriangle(-14, 8, -6, 8, -10, 14);
+      // Aerodynamic fins hanging down from rear bottom — use contrasting light gray
+      g.fillStyle(0xaaaaaa);
+      g.fillTriangle(-36, 10, -24, 10, -30, 22);
+      g.fillTriangle(-24, 10, -14, 10, -19, 20);
+      g.fillTriangle(-14, 10, -6, 10, -10, 18);
+      // darker face to add depth
+      g.fillStyle(0x777777);
+      g.fillTriangle(-36, 10, -33, 10, -30, 22);
+      g.fillTriangle(-24, 10, -21, 10, -19, 20);
+      g.fillTriangle(-14, 10, -11, 10, -10, 18);
     },
   },
   {
@@ -744,9 +830,14 @@ const advancedAttachments = [
     classId: 'advanced',
     cost: 5000,
     draw(g, c) {
-      g.fillStyle(0x111111);
-      g.fillTriangle(-26, -4, -14, -4, -26, 2);
-      g.fillTriangle(14, -4, 26, -4, 26, 2);
+      // Air intake scoops on sides — dark opening with lighter rim for contrast
+      // Supercar body: x:-36 to +40, y:-6 to +14
+      g.fillStyle(0xffffff, 0.25);
+      g.fillEllipse(-22, 2, 16, 10);   // left scoop rim highlight
+      g.fillEllipse(20, 2, 16, 10);    // right scoop rim highlight
+      g.fillStyle(0x000000, 0.7);
+      g.fillEllipse(-22, 2, 12, 7);    // left dark opening
+      g.fillEllipse(20, 2, 12, 7);     // right dark opening
     },
   },
   {
@@ -775,14 +866,21 @@ const advancedAttachments = [
     classId: 'advanced',
     cost: 8000,
     draw(g, c) {
-      g.fillStyle(0xaaaaaa, 0.6);
-      const positions = [
-        [36, -3], [40, -3], [44, -3],
-        [38, 0], [42, 0],
-        [36, 3], [40, 3], [44, 3],
-      ];
-      for (const [x, y] of positions) {
-        g.fillRect(x, y, 3, 3);
+      // Large diamond/sparkle pattern on the front nose area of the supercar.
+      // Supercar nose: x=+30..+48. Use big, bright, clearly-visible diamonds.
+      // Background panel on front face
+      g.fillStyle(0x222222, 0.7);
+      g.fillRect(30, -5, 16, 12);
+      // Large bright diamonds (rotated squares) in a 2×3 grid
+      const positions = [[33, -2], [40, -2], [33, 4], [40, 4]];
+      for (const [dx, dy] of positions) {
+        // Diamond: top, right, bottom, left points
+        g.fillStyle(0xffffff, 1.0);
+        g.fillTriangle(dx, dy - 3, dx + 3, dy, dx, dy + 3);
+        g.fillTriangle(dx, dy - 3, dx - 3, dy, dx, dy + 3);
+        // Cyan glint
+        g.fillStyle(0x00ffff, 0.8);
+        g.fillTriangle(dx, dy - 3, dx + 2, dy - 1, dx - 1, dy - 1);
       }
     },
   },
@@ -805,12 +903,18 @@ const advancedAttachments = [
     classId: 'advanced',
     cost: 12000,
     draw(g, c) {
-      g.fillStyle(0xff4400, 0.9);
-      g.fillTriangle(-22, 10, -40, 12, -22, 16);
-      g.fillStyle(0xffaa00, 0.7);
-      g.fillTriangle(-22, 11, -36, 12, -22, 15);
-      g.fillStyle(0xffee00, 0.5);
-      g.fillTriangle(-22, 12, -32, 12, -22, 14);
+      // Large dramatic flames shooting LEFT from rear of supercar (rear at x~-30).
+      // Supercar body bottom ~y=+8. Flames shoot horizontally from exhausts.
+      g.fillStyle(0xff1100, 1.0);
+      g.fillTriangle(-30, 2, -68, 6, -30, 14);   // huge outer flame
+      g.fillStyle(0xff6600, 0.95);
+      g.fillTriangle(-30, 3, -56, 6, -30, 12);   // mid flame
+      g.fillStyle(0xffcc00, 0.9);
+      g.fillTriangle(-30, 4, -46, 6, -30, 10);   // inner orange
+      g.fillStyle(0xffee88, 0.8);
+      g.fillTriangle(-30, 5, -38, 6, -30,  8);   // hot core
+      g.fillStyle(0xffffff, 0.5);
+      g.fillTriangle(-30, 6, -33, 6, -30,  7);   // white tip
     },
   },
   {

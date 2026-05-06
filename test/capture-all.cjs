@@ -6,7 +6,7 @@
  *   node test/capture-all.cjs
  *
  * Prerequisites:
- *   - Dev server running at http://localhost:3000  (npm run dev)
+ *   - Dev server running at http://localhost:3002  (npm run dev)
  *
  * Output:
  *   test/screenshots/{classId}-{attachmentId}.png  (256×256 each)
@@ -18,7 +18,7 @@ const puppeteer = require('puppeteer');
 const path      = require('path');
 const fs        = require('fs');
 
-const BASE_URL   = 'http://localhost:3000/test/visual-test.html';
+const BASE_URL   = 'http://localhost:3002/test/visual-test.html';
 const SHOTS_DIR  = path.join(__dirname, 'screenshots');
 const WAIT_MS    = 600;   // ms after navigation before screenshot
 
