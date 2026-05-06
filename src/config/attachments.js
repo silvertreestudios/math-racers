@@ -39,16 +39,16 @@ const additionAttachments = [
     classId: 'addition',
     cost: 1000,
     draw(g, c) {
-      // Mini F1-style rear wing: two uprights on the rear of the kart body,
-      // topped by a wide horizontal airfoil blade.
-      // Kart body rear edge ~x=-26, body top ~y=-7
+      // Mini F1-style rear wing elevated above the kart body.
+      // Kart body rear edge ~x=-26, body top ~y=-7, helmet center ~y=-13.
+      // Uprights rise from the body top up to wing blade level.
       g.fillStyle(0x999999);
-      g.fillRect(-25, -7, 3, 8);   // left upright (connects to rear body)
-      g.fillRect(-15, -7, 3, 8);   // right upright
+      g.fillRect(-25, -22, 3, 15);  // left upright (body top → blade)
+      g.fillRect(-15, -22, 3, 15);  // right upright
       g.fillStyle(0xcccccc);
-      g.fillRect(-28, -10, 20, 4); // wide horizontal blade above uprights
+      g.fillRect(-28, -24, 20, 4);  // wide horizontal blade at helmet height
       g.fillStyle(0x777777);
-      g.fillRect(-28, -7, 20, 2);  // blade underside shadow
+      g.fillRect(-28, -21, 20, 2);  // blade underside shadow
     },
   },
   {
