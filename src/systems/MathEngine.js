@@ -81,24 +81,36 @@ export class MathEngine {
   _addition(track, tier = 'full') {
     let a, b;
     if (tier === 'easy') {
-      // No carrying: pick digits so each column sums ≤ 9
-      // Strategy: keep both operands small and carry-free
+      // No carrying: keep both operands ≤ 49. Fall through to full if track min > 49.
       const aMax = Math.min(track.operandA.max, 49);
       const bMax = Math.min(track.operandB.max, 49);
-      do {
-        a = this._rand(track.operandA.min, aMax);
-        b = this._rand(track.operandB.min, bMax);
-      } while (!this._additionNoCarry(a, b));
+      if (aMax >= track.operandA.min && bMax >= track.operandB.min) {
+        let tries = 0;
+        do {
+          a = this._rand(track.operandA.min, aMax);
+          b = this._rand(track.operandB.min, bMax);
+          tries++;
+        } while (!this._additionNoCarry(a, b) && tries < 20);
+      } else {
+        // Track range exceeds easy constraints — fall through to full difficulty
+        a = this._rand(track.operandA.min, track.operandA.max);
+        b = this._rand(track.operandB.min, track.operandB.max);
+      }
     } else if (tier === 'medium') {
-      // At most one carry — allow any values but avoid multi-carry
+      // At most one carry — allow values ≤ 99. Fall through to full if track min > 99.
       const aMax = Math.min(track.operandA.max, 99);
       const bMax = Math.min(track.operandB.max, 99);
-      let tries = 0;
-      do {
-        a = this._rand(track.operandA.min, aMax);
-        b = this._rand(track.operandB.min, bMax);
-        tries++;
-      } while (this._additionCarryCount(a, b) > 1 && tries < 20);
+      if (aMax >= track.operandA.min && bMax >= track.operandB.min) {
+        let tries = 0;
+        do {
+          a = this._rand(track.operandA.min, aMax);
+          b = this._rand(track.operandB.min, bMax);
+          tries++;
+        } while (this._additionCarryCount(a, b) > 1 && tries < 20);
+      } else {
+        a = this._rand(track.operandA.min, track.operandA.max);
+        b = this._rand(track.operandB.min, track.operandB.max);
+      }
     } else {
       a = this._rand(track.operandA.min, track.operandA.max);
       b = this._rand(track.operandB.min, track.operandB.max);
@@ -140,25 +152,35 @@ export class MathEngine {
   _subtraction(track, tier = 'full') {
     let a, b;
     if (tier === 'easy') {
-      // No borrowing: each digit of b <= corresponding digit of a
+      // No borrowing. Fall through to full if track min > 99.
       const aMax = Math.min(track.operandA.max, 99);
       const bMax = Math.min(track.operandB.max, 99);
-      let tries = 0;
-      do {
-        a = this._rand(track.operandA.min, aMax);
-        b = this._rand(track.operandB.min, Math.min(bMax, a));
-        tries++;
-      } while (!this._subtractionNoBorrow(a, b) && tries < 20);
+      if (aMax >= track.operandA.min && bMax >= track.operandB.min) {
+        let tries = 0;
+        do {
+          a = this._rand(track.operandA.min, aMax);
+          b = this._rand(track.operandB.min, Math.min(bMax, a));
+          tries++;
+        } while (!this._subtractionNoBorrow(a, b) && tries < 20);
+      } else {
+        a = this._rand(track.operandA.min, track.operandA.max);
+        b = this._rand(track.operandB.min, track.operandB.max);
+      }
     } else if (tier === 'medium') {
-      // At most one borrow
+      // At most one borrow. Fall through to full if track min > 99.
       const aMax = Math.min(track.operandA.max, 99);
       const bMax = Math.min(track.operandB.max, 99);
-      let tries = 0;
-      do {
-        a = this._rand(track.operandA.min, aMax);
-        b = this._rand(track.operandB.min, Math.min(bMax, a));
-        tries++;
-      } while (this._subtractionBorrowCount(a, b) > 1 && tries < 20);
+      if (aMax >= track.operandA.min && bMax >= track.operandB.min) {
+        let tries = 0;
+        do {
+          a = this._rand(track.operandA.min, aMax);
+          b = this._rand(track.operandB.min, Math.min(bMax, a));
+          tries++;
+        } while (this._subtractionBorrowCount(a, b) > 1 && tries < 20);
+      } else {
+        a = this._rand(track.operandA.min, track.operandA.max);
+        b = this._rand(track.operandB.min, track.operandB.max);
+      }
     } else {
       a = this._rand(track.operandA.min, track.operandA.max);
       b = this._rand(track.operandB.min, track.operandB.max);
@@ -200,15 +222,21 @@ export class MathEngine {
   _multiplication(track, tier = 'full') {
     let a, b;
     if (tier === 'easy') {
-      // One operand is a single digit or multiple of 10
-      if (Math.random() < 0.5) {
-        a = this._rand(Math.max(track.operandA.min, 2), Math.min(track.operandA.max, 9));
+      // One operand is a single digit. Fall through to full if track min > 9.
+      const aEasyMax = Math.min(track.operandA.max, 9);
+      const bEasyMax = Math.min(track.operandB.max, 9);
+      if (aEasyMax >= track.operandA.min) {
+        a = this._rand(Math.max(track.operandA.min, 2), aEasyMax);
         b = this._rand(track.operandB.min, track.operandB.max);
-      } else {
+      } else if (bEasyMax >= track.operandB.min) {
         a = this._rand(track.operandA.min, track.operandA.max);
-        // multiple of 10 within range, or single digit
-        const maxB = Math.min(track.operandB.max, 9);
-        b = this._rand(Math.max(track.operandB.min, 2), Math.max(maxB, track.operandB.min));
+        b = this._rand(Math.max(track.operandB.min, 2), bEasyMax);
+      } else {
+        // Both ranges exceed single-digit — use lower half of each range
+        const aMid = Math.floor((track.operandA.min + track.operandA.max) / 2);
+        const bMid = Math.floor((track.operandB.min + track.operandB.max) / 2);
+        a = this._rand(track.operandA.min, aMid);
+        b = this._rand(track.operandB.min, bMid);
       }
     } else if (tier === 'medium') {
       // Lower half of each range
@@ -230,11 +258,16 @@ export class MathEngine {
     // Build clean division: dividend = divisor × quotient (no remainder)
     let divisor, quotient;
     if (tier === 'easy') {
-      // Small divisor (2-5) clamped to track range, single-digit quotient
+      // Small divisor (2-5), single-digit quotient. Fall through if track min exceeds caps.
       const divMax = Math.min(track.divisorRange.max, 5);
-      divisor  = this._rand(track.divisorRange.min, Math.max(divMax, track.divisorRange.min));
-      const qMax = Math.min(track.quotientRange.max, 9);
-      quotient = this._rand(track.quotientRange.min, Math.max(qMax, track.quotientRange.min));
+      const qMax   = Math.min(track.quotientRange.max, 9);
+      if (divMax >= track.divisorRange.min && qMax >= track.quotientRange.min) {
+        divisor  = this._rand(track.divisorRange.min, divMax);
+        quotient = this._rand(track.quotientRange.min, qMax);
+      } else {
+        divisor  = this._rand(track.divisorRange.min, track.divisorRange.max);
+        quotient = this._rand(track.quotientRange.min, track.quotientRange.max);
+      }
     } else if (tier === 'medium') {
       // Lower half of each range
       const divMid = Math.floor((track.divisorRange.min + track.divisorRange.max) / 2);
